@@ -36,10 +36,32 @@ export class Lighting {
     this.sunLight.shadow.bias = -0.0003;
     this.sunLight.shadow.radius = 2.5;
 
+    // The sun is parented to nothing, but its position and target follow the
+    // player so the (necessarily limited) shadow frustum always covers her.
+    this.sunOffset = new THREE.Vector3(25, 35, 20);
+    this.sunLight.target = new THREE.Object3D();
+    this.scene.add(this.sunLight.target);
     this.scene.add(this.sunLight);
 
     // 3. Subtle Warm Ambient Fill Light for gentle shadows
     this.ambientLight = new THREE.AmbientLight(0xffecd1, 0.45);
     this.scene.add(this.ambientLight);
+  }
+
+  /**
+   * Keep the shadow-casting sun centred on the player.
+   * Without this, shadows would only resolve near the world origin.
+   */
+  update(focusPosition) {
+    if (!focusPosition) return;
+
+    this.sunLight.target.position.set(focusPosition.x, 0, focusPosition.z);
+    this.sunLight.target.updateMatrixWorld();
+
+    this.sunLight.position.set(
+      focusPosition.x + this.sunOffset.x,
+      this.sunOffset.y,
+      focusPosition.z + this.sunOffset.z
+    );
   }
 }
