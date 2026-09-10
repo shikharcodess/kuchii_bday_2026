@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Her World — A Special Walk for Kuchii</title>
+    <meta name="description" content="A 3D walkable birthday experience for Shivani (Kuchii)." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="canvas-container"></div>
+
+    <div id="ui-overlay">
+      <!-- Top Bar / Header -->
+      <header id="top-bar">
+        <div class="logo">
+          <span class="title">Her World</span>
+          <span class="subtitle">For Shivani &hearts;</span>
+        </div>
+        <div class="status-pill">
+          <span class="pulse-dot"></span>
+          <span>Phase 0: Scaffold Active</span>
+        </div>
+      </header>
+
+      <!-- Prompt Overlay for future station interaction -->
+      <div id="interaction-prompt" class="hidden">
+        <div class="prompt-badge">
+          <span class="key-icon">E</span>
+          <span class="prompt-text">Look closer</span>
+        </div>
+      </div>
+
+      <!-- Controls Guidance / Footnote -->
+      <footer id="bottom-bar">
+        <div class="controls-hint">
+          <span class="control-key">W</span>
+          <span class="control-key">A</span>
+          <span class="control-key">S</span>
+          <span class="control-key">D</span>
+          <span class="hint-label">Movement arriving in Phase 1</span>
+        </div>
+        <div class="version-tag">Target: Oct 13</div>
+      </footer>
+    </div>
+
+    <!-- Script Entry Point -->
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
