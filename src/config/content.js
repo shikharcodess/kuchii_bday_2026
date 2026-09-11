@@ -14,11 +14,27 @@ export const CONTENT = {
   },
 
   theme: {
-    skyColor: 0x2b2236, // dusk purple
-    fogColor: 0x42314f,
-    sunColor: 0xffe2b2, // warm golden hour sun
-    ambientSky: 0xffe9d2,
-    ambientGround: 0x4a3b32,
+    // Physical sky settings — a low sun for warm, raking golden-hour light.
+    sky: {
+      // High enough that shadows stay readable: at single-digit elevations a
+      // 5-unit tree casts a 30-unit shadow and half the map goes dark.
+      elevation: 26,
+      azimuth: 38, // behind the walker, so she isn't looking into the sun
+      turbidity: 3.6,
+      rayleigh: 1.6,
+      mieCoefficient: 0.006,
+      mieDirectionalG: 0.84,
+      hazeColor: 0xc3b79c,
+      hazeDensity: 0.0034,
+      groundBounce: 0x5e5340,
+      environmentIntensity: 0.8
+    },
+
+    sunColor: 0xffe0b8, // warm late-afternoon sun
+    sunIntensity: 2.9,
+    ambientSky: 0xd8e4f0,
+    ambientGround: 0x6b5a3f,
+
     accentGold: '#f6c878',
     accentPink: '#f4a261',
     accentSunflower: '#f3c053'
@@ -33,6 +49,10 @@ export const CONTENT = {
   world: {
     walkSpeed: 3.6, // units per second
     turnSpeed: 9.0, // how quickly the character faces her travel direction
+    jump: {
+      velocity: 6.2, // initial upward speed
+      gravity: 19.0 // tuned for a snappy arc rather than a floaty one
+    },
     ground: { width: 210, depth: 480, centerZ: -170 },
     bounds: { minX: -72, maxX: 72, minZ: -368, maxZ: 30 },
     pathWidth: 4.4

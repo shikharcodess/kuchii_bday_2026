@@ -40,8 +40,15 @@ const STATION_BUILDERS = {
  * at the end.
  */
 export class World {
-  constructor(scene) {
+  /**
+   * @param {THREE.Scene} scene
+   * @param {{interactions: InteractionSystem, camera: CameraController}} services
+   *   passed through to the stations, so a station can offer an interaction
+   *   without reaching back into the app.
+   */
+  constructor(scene, services = {}) {
     this.scene = scene;
+    this.services = services;
     this.stations = new Map();
 
     /** Circle colliders: { x, z, r } */
@@ -50,10 +57,11 @@ export class World {
     this.boxes = [];
     /** Per-frame callbacks registered by station props. */
     this.animated = [];
+    /** Areas cut out of the meadow, e.g. the pond basin. */
+    this.holes = [];
 
     this.bounds = CONTENT.world.bounds;
 
-    this.ground = new Ground(scene);
     this.paths = new Paths(scene);
 
     this.fields = {
@@ -66,6 +74,11 @@ export class World {
     };
 
     this._buildStations();
+
+    // The meadow is built after the stations so it can be carved around
+    // anything sunken they placed.
+    this.ground = new Ground(scene, this.holes);
+
     this._dressRoadside();
     this._buildPerimeter();
 
@@ -80,7 +93,11 @@ export class World {
       paths: this.paths,
       fields: this.fields,
       station,
+      interactions: this.services.interactions,
+      camera: this.services.camera,
+      messagePanel: this.services.messagePanel,
       addCircle: (x, z, r) => this.addCircle(x, z, r),
+      addHole: (hole) => this.holes.push(hole),
       addBox: (x, z, halfW, halfD, rotation = 0) => this.addBox(x, z, halfW, halfD, rotation),
       addLocalCircle: (group, lx, lz, r) => {
         const world = this.localToWorld(group, lx, lz);
@@ -292,7 +309,7 @@ export class World {
     return new THREE.Vector3(0, 0, 6);
   }
 
-  update(elapsed) {
-    for (const fn of this.animated) fn(elapsed);
+  update(elapsed, dt) {
+    for (const fn of this.animated) fn(elapsed, dt);
   }
 }

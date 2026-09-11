@@ -16,8 +16,9 @@ export class InputManager {
     this.lastPointerX = 0;
     this.timeSinceDrag = Infinity;
 
-    // Latched "interact" press, consumed by the station system in Phase 3
+    // Latched presses, consumed once by whoever handles them
     this.interactQueued = false;
+    this.jumpQueued = false;
 
     this._bind();
   }
@@ -26,10 +27,13 @@ export class InputManager {
     this._onKeyDown = (event) => {
       const code = event.code;
       if (MOVE_CODES.has(code)) event.preventDefault();
+      // Repeat events fire while a key is held; only the first press counts.
+      const isRepeat = event.repeat || this.keys.has(code);
       this.keys.add(code);
-      if (code === 'KeyE' || code === 'Space' || code === 'Enter') {
-        this.interactQueued = true;
-      }
+      if (isRepeat) return;
+
+      if (code === 'KeyE' || code === 'Enter') this.interactQueued = true;
+      if (code === 'Space') this.jumpQueued = true;
     };
 
     this._onKeyUp = (event) => this.keys.delete(event.code);
@@ -38,6 +42,7 @@ export class InputManager {
     this._onBlur = () => {
       this.keys.clear();
       this.dragging = false;
+      this.jumpQueued = false;
     };
 
     this._onPointerDown = (event) => {
@@ -96,6 +101,17 @@ export class InputManager {
     const queued = this.interactQueued;
     this.interactQueued = false;
     return queued;
+  }
+
+  consumeJump() {
+    const queued = this.jumpQueued;
+    this.jumpQueued = false;
+    return queued;
+  }
+
+  /** Fired by UI buttons, so a click does the same thing as pressing E. */
+  queueInteract() {
+    this.interactQueued = true;
   }
 
   get isMoving() {

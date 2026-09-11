@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MAT, tinted } from '../Materials.js';
 import { createFenceRun, createBench, createLantern } from '../Props.js';
+import { damp } from '../../utils/MathUtils.js';
 
 /**
  * Station 1 — the House (start point).
@@ -9,6 +10,13 @@ import { createFenceRun, createBench, createLantern } from '../Props.js';
  * road and angled toward it so it's in view the moment the world loads. The
  * blank painted wall in the side yard is a quiet nod to the home in the plans,
  * never spelled out in words.
+ *
+ * The front door opens onto a small enclosed vestibule (rather than a hole cut
+ * into the main house volume, which primitive geometry can't do): its own
+ * floor, side walls and a door on a hinge, sitting on the porch in front of
+ * the house's existing front wall. Approaching it offers the first real
+ * interaction in the world — opening the door reveals a warm little entryway
+ * and her welcome message.
  *
  * Everything is built in the group's local space and converted through
  * `ctx.localToWorld` where world coordinates are needed, so the whole station
@@ -84,16 +92,7 @@ export function buildHouse(ctx) {
   group.add(doormat);
   group.userData.doormat = doormat; // Phase 3 puts the welcome line here
 
-  // --- Door & windows ---
-  const door = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.5, 0.14), MAT.darkWood);
-  door.position.set(0, 1.25, 4.02);
-  door.castShadow = true;
-  group.add(door);
-
-  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), MAT.gold);
-  knob.position.set(0.5, 1.3, 4.12);
-  group.add(knob);
-
+  // --- Windows ---
   const windowGeo = new THREE.BoxGeometry(1.5, 1.4, 0.12);
   const windowSpots = [
     [-2.8, 2.4, 4.02, 0],
@@ -122,6 +121,154 @@ export function buildHouse(ctx) {
   const lampGlobe = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), MAT.lampGlow);
   lampGlobe.position.set(0, 2.85, 5.9);
   group.add(lampGlobe);
+
+  // --- Entry vestibule: a small enclosed nook in front of the house wall,
+  // with its own hinged door. This is where "walk up and open the door"
+  // actually goes somewhere, rather than a door mesh flush against a solid
+  // wall with nothing behind it. ---
+  const nookDepth = 0.95;
+  const nookFrontZ = 4 + nookDepth;
+  const nookWidth = 2.0;
+  const nookHeight = 2.5;
+
+  const nook = new THREE.Group();
+  nook.position.set(0, 0, 4);
+  group.add(nook);
+
+  const nookFloor = new THREE.Mesh(new THREE.BoxGeometry(nookWidth, 0.06, nookDepth), MAT.plank);
+  nookFloor.position.set(0, 0.03, nookDepth / 2);
+  nookFloor.receiveShadow = true;
+  nook.add(nookFloor);
+
+  const nookCeiling = new THREE.Mesh(
+    new THREE.BoxGeometry(nookWidth, 0.08, nookDepth),
+    MAT.paleWall
+  );
+  nookCeiling.position.set(0, nookHeight, nookDepth / 2);
+  nookCeiling.receiveShadow = true;
+  nook.add(nookCeiling);
+
+  const nookWallGeo = new THREE.BoxGeometry(0.1, nookHeight, nookDepth);
+  for (const side of [-1, 1]) {
+    const wall = new THREE.Mesh(nookWallGeo, MAT.paleWall);
+    wall.position.set((side * nookWidth) / 2, nookHeight / 2, nookDepth / 2);
+    wall.castShadow = true;
+    wall.receiveShadow = true;
+    nook.add(wall);
+  }
+
+  // Front facade: two jambs and a header, leaving the doorway open between them
+  const doorWidth = 1.3;
+  const doorHeight = 2.2;
+  const jambWidth = (nookWidth - doorWidth) / 2;
+
+  const jambGeo = new THREE.BoxGeometry(jambWidth, nookHeight, 0.1);
+  for (const side of [-1, 1]) {
+    const jamb = new THREE.Mesh(jambGeo, MAT.paleWall);
+    jamb.position.set(side * (doorWidth / 2 + jambWidth / 2), nookHeight / 2, nookDepth);
+    jamb.castShadow = true;
+    jamb.receiveShadow = true;
+    nook.add(jamb);
+  }
+
+  const header = new THREE.Mesh(
+    new THREE.BoxGeometry(doorWidth, nookHeight - doorHeight, 0.1),
+    MAT.paleWall
+  );
+  header.position.set(0, doorHeight + (nookHeight - doorHeight) / 2, nookDepth);
+  header.castShadow = true;
+  nook.add(header);
+
+  // A small gabled cap over the nook, so it reads as a proper little porch
+  // room rather than a box stuck to the wall
+  const nookRoof = new THREE.Mesh(
+    new THREE.BoxGeometry(nookWidth + 0.4, 0.16, nookDepth + 0.5),
+    MAT.roofTile
+  );
+  nookRoof.position.set(0, nookHeight + 0.08, nookDepth / 2 - 0.1);
+  nookRoof.rotation.x = -0.05;
+  nookRoof.castShadow = true;
+  nook.add(nookRoof);
+
+  // Interior dressing: a small round rug and a warm pendant light, so opening
+  // the door reveals somewhere lived-in rather than an empty box
+  const rug = new THREE.Mesh(
+    new THREE.CircleGeometry(0.55, 24),
+    tinted(MAT.fabricPink, 0xd98fa0)
+  );
+  rug.rotation.x = -Math.PI / 2;
+  rug.position.set(0, 0.065, nookDepth * 0.6);
+  nook.add(rug);
+
+  const pendantCord = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.4, 6), MAT.darkWood);
+  pendantCord.position.set(0, nookHeight - 0.2, nookDepth / 2);
+  nook.add(pendantCord);
+
+  const pendantShade = new THREE.Mesh(
+    new THREE.ConeGeometry(0.18, 0.2, 12, 1, true),
+    tinted(MAT.fabricCream, 0xf2e2c8, { side: THREE.DoubleSide })
+  );
+  pendantShade.position.set(0, nookHeight - 0.42, nookDepth / 2);
+  nook.add(pendantShade);
+
+  const nookLight = new THREE.PointLight(0xffcf9a, 0, 3.2, 2);
+  nookLight.position.set(0, nookHeight - 0.5, nookDepth / 2);
+  nook.add(nookLight);
+
+  // A hook with a light scarf, a small nod to someone who's always dressed well
+  const hook = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), MAT.metal);
+  hook.position.set(nookWidth / 2 - 0.15, nookHeight - 0.6, 0.15);
+  nook.add(hook);
+
+  const scarf = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.22, 0.5),
+    tinted(MAT.fabricPink, 0xdba8c0, { side: THREE.DoubleSide })
+  );
+  scarf.position.set(nookWidth / 2 - 0.15, nookHeight - 0.85, 0.14);
+  nook.add(scarf);
+
+  // --- The door itself, hinged on its left edge ---
+  const doorHinge = new THREE.Group();
+  doorHinge.position.set(-doorWidth / 2, 0, nookFrontZ);
+  nook.add(doorHinge);
+
+  const door = new THREE.Mesh(new THREE.BoxGeometry(doorWidth, doorHeight, 0.08), MAT.darkWood);
+  door.position.set(doorWidth / 2, doorHeight / 2, 0);
+  door.castShadow = true;
+  doorHinge.add(door);
+
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), MAT.gold);
+  knob.position.set(doorWidth - 0.15, doorHeight / 2, 0.05);
+  doorHinge.add(knob);
+
+  // Door state, eased open/closed by the interaction below
+  const doorState = { angle: 0, target: 0 };
+  ctx.registerAnimated((time, dt) => {
+    doorState.angle = damp(doorState.angle, doorState.target, 6, dt);
+    doorHinge.rotation.y = doorState.angle;
+    nookLight.intensity = doorState.angle < -0.05 ? 5.5 : 0;
+  });
+
+  // Interaction: the first thing to actually do in the whole world
+  const doorWorld = ctx.localToWorld(nook, 0, nookFrontZ);
+  ctx.interactions.register({
+    id: 'house_door',
+    x: doorWorld.x,
+    z: doorWorld.z,
+    radius: 3.2,
+    label: 'Open the door',
+    activeLabel: 'Close the door',
+    onEnter: () => {
+      doorState.target = -2.1; // swings inward, into the vestibule
+      ctx.messagePanel.show(ctx.station.message);
+    },
+    onExit: () => {
+      doorState.target = 0;
+      ctx.messagePanel.hide();
+    }
+  });
+
+  ctx.addLocalCircle(group, 0, nookDepth / 2 + 4, 1.6); // the nook itself
 
   // --- Side yard: a blank wall waiting to be painted, and a vegetable patch ---
   const paintWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.6, 5), MAT.white);

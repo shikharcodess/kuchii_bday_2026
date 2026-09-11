@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
 import { MAT, tinted } from './Materials.js';
 
 /**
@@ -16,8 +17,8 @@ export class InstancedField {
     this.instances = [];
   }
 
-  add(x, z, { scale = 1, rotY = 0, y = 0, tilt = 0 } = {}) {
-    this.instances.push({ x, y, z, scale, rotY, tilt });
+  add(x, z, { scale = 1, rotY = 0, y = 0, tilt = 0, tint = null } = {}) {
+    this.instances.push({ x, y, z, scale, rotY, tilt, tint });
     return this;
   }
 
@@ -34,7 +35,9 @@ export class InstancedField {
     const pos = new THREE.Vector3();
     const scl = new THREE.Vector3();
 
-    const meshes = this.parts.map(({ geometry, material }) => {
+    const color = new THREE.Color();
+
+    const meshes = this.parts.map(({ geometry, material, vary = 0 }) => {
       const mesh = new THREE.InstancedMesh(geometry, material, this.instances.length);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
@@ -46,9 +49,19 @@ export class InstancedField {
         scl.setScalar(inst.scale);
         matrix.compose(pos, quat, scl);
         mesh.setMatrixAt(i, matrix);
+
+        // Deterministic per-instance shade so no two plants match exactly.
+        if (vary > 0) {
+          const jitter = inst.tint ?? hashUnit(inst.x, inst.z, i);
+          const shade = 1 + (jitter - 0.5) * vary;
+          const warmth = 1 + (hashUnit(inst.z, inst.x, i + 7) - 0.5) * vary * 0.6;
+          color.setRGB(shade * warmth, shade, shade / warmth);
+          mesh.setColorAt(i, color);
+        }
       });
 
       mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
       parent.add(mesh);
       return mesh;
     });
@@ -57,23 +70,28 @@ export class InstancedField {
   }
 }
 
-/** A broadleaf tree: tapered trunk + three offset foliage clusters. */
+/** A broadleaf tree: tapered trunk + several noise-roughened foliage clusters. */
 export function treeField(leafMaterial = MAT.leaf) {
-  const trunk = new THREE.CylinderGeometry(0.16, 0.3, 3.2, 7);
-  trunk.translate(0, 1.6, 0);
+  const trunk = new THREE.CylinderGeometry(0.15, 0.34, 3.4, 8);
+  roughen(trunk, 0.05, 1.4);
+  trunk.translate(0, 1.7, 0);
 
-  const canopyA = new THREE.IcosahedronGeometry(1.35, 1);
-  canopyA.translate(0, 3.7, 0);
-  const canopyB = new THREE.IcosahedronGeometry(0.95, 1);
-  canopyB.translate(0.85, 3.1, 0.4);
-  const canopyC = new THREE.IcosahedronGeometry(0.85, 1);
-  canopyC.translate(-0.7, 3.3, -0.5);
-
-  const canopy = mergeGeometries([canopyA, canopyB, canopyC]);
+  const clusters = [
+    [0, 3.9, 0, 1.4],
+    [0.9, 3.2, 0.45, 0.95],
+    [-0.78, 3.45, -0.5, 0.9],
+    [0.25, 4.6, -0.35, 0.8],
+    [-0.5, 3.0, 0.7, 0.7]
+  ].map(([cx, cy, cz, r]) => {
+    const blob = new THREE.IcosahedronGeometry(r, 2);
+    roughen(blob, r * 0.3, 1.1);
+    blob.translate(cx, cy, cz);
+    return blob;
+  });
 
   return new InstancedField([
-    { geometry: trunk, material: MAT.bark },
-    { geometry: canopy, material: leafMaterial }
+    { geometry: trunk, material: MAT.bark, vary: 0.16 },
+    { geometry: mergeGeometries(clusters), material: leafMaterial, vary: 0.34 }
   ]);
 }
 
@@ -83,39 +101,49 @@ export function pineField(leafMaterial = MAT.leafDeep) {
   trunk.translate(0, 1.0, 0);
 
   const tiers = [
-    { r: 1.25, h: 1.8, y: 2.0 },
-    { r: 0.95, h: 1.6, y: 3.1 },
-    { r: 0.6, h: 1.3, y: 4.1 }
+    { r: 1.3, h: 1.9, y: 2.0 },
+    { r: 1.05, h: 1.7, y: 3.0 },
+    { r: 0.78, h: 1.5, y: 3.9 },
+    { r: 0.45, h: 1.2, y: 4.8 }
   ].map(({ r, h, y }) => {
-    const cone = new THREE.ConeGeometry(r, h, 8);
+    const cone = new THREE.ConeGeometry(r, h, 9, 3);
+    roughen(cone, r * 0.16, 2.2);
     cone.translate(0, y, 0);
     return cone;
   });
 
   return new InstancedField([
-    { geometry: trunk, material: MAT.bark },
-    { geometry: mergeGeometries(tiers), material: leafMaterial }
+    { geometry: trunk, material: MAT.bark, vary: 0.14 },
+    { geometry: mergeGeometries(tiers), material: leafMaterial, vary: 0.3 }
   ]);
 }
 
 /** Low rounded shrubs used to soften path edges and building bases. */
 export function bushField(material = MAT.leafWarm) {
-  const a = new THREE.IcosahedronGeometry(0.55, 1);
-  a.translate(0, 0.42, 0);
-  const b = new THREE.IcosahedronGeometry(0.38, 1);
-  b.translate(0.42, 0.3, 0.18);
-  const c = new THREE.IcosahedronGeometry(0.33, 1);
-  c.translate(-0.36, 0.28, -0.2);
+  const parts = [
+    [0, 0.42, 0, 0.55],
+    [0.42, 0.3, 0.18, 0.38],
+    [-0.36, 0.28, -0.2, 0.33],
+    [0.1, 0.55, -0.3, 0.28]
+  ].map(([bx, by, bz, r]) => {
+    const blob = new THREE.IcosahedronGeometry(r, 2);
+    roughen(blob, r * 0.3, 1.6);
+    blob.translate(bx, by, bz);
+    return blob;
+  });
 
-  return new InstancedField([{ geometry: mergeGeometries([a, b, c]), material }]);
+  return new InstancedField([
+    { geometry: mergeGeometries(parts), material, vary: 0.32 }
+  ]);
 }
 
 /** Scattered stones so the meadow doesn't read as an empty plane. */
 export function rockField(material = MAT.stone) {
-  const rock = new THREE.DodecahedronGeometry(0.45, 0);
+  const rock = new THREE.DodecahedronGeometry(0.45, 1);
+  roughen(rock, 0.09, 2.6);
   rock.scale(1, 0.6, 1.15);
-  rock.translate(0, 0.2, 0);
-  return new InstancedField([{ geometry: rock, material }]);
+  rock.translate(0, 0.18, 0);
+  return new InstancedField([{ geometry: rock, material, vary: 0.2 }]);
 }
 
 /** Tall grass tufts — a splayed cluster of tapered blades, cheap in bulk. */
@@ -137,40 +165,57 @@ export function grassTuftField(material = MAT.grassLight) {
   return new InstancedField([{ geometry: mergeGeometries(blades), material }]);
 }
 
-/** Sunflower field: stem, leaf pair, petal disc and dark seeded core. */
+/**
+ * Sunflower field: stem, leaf pair, petal disc and dark seeded core.
+ *
+ * Scaled to life: the world runs at roughly 1.2 units per metre, so a stem of
+ * 1.9 units is a ~1.6m plant and the 0.23-unit head is a ~38cm flower. Earlier
+ * versions were nearly twice this and towered over her.
+ */
 export function sunflowerField() {
-  const stem = new THREE.CylinderGeometry(0.045, 0.06, 1.9, 6);
-  stem.translate(0, 0.95, 0);
+  const stem = new THREE.CylinderGeometry(0.022, 0.035, 1.75, 6);
+  stem.translate(0, 0.87, 0);
 
-  const leafA = new THREE.SphereGeometry(0.26, 8, 6);
-  leafA.scale(1.5, 0.12, 0.55);
-  leafA.translate(0.28, 1.05, 0);
-  const leafB = leafA.clone();
-  leafB.rotateY(Math.PI);
-  leafB.translate(-0.56, -0.28, 0);
+  // A slight lean, so a field of them doesn't stand to attention
+  const leafA = new THREE.SphereGeometry(0.16, 8, 6);
+  leafA.scale(1.35, 0.08, 0.6);
+  leafA.rotateZ(-0.35);
+  leafA.translate(0.15, 0.78, 0.02);
+
+  const leafB = new THREE.SphereGeometry(0.13, 8, 6);
+  leafB.scale(1.35, 0.08, 0.6);
+  leafB.rotateZ(0.4);
+  leafB.rotateY(Math.PI * 0.85);
+  leafB.translate(-0.13, 1.12, -0.03);
 
   const petals = [];
-  const petalCount = 14;
+  const petalCount = 18;
   for (let i = 0; i < petalCount; i++) {
-    const petal = new THREE.SphereGeometry(0.2, 6, 5);
-    petal.scale(0.38, 0.1, 1);
-    petal.translate(0, 0, 0.3);
+    const petal = new THREE.SphereGeometry(0.1, 6, 5);
+    // Long, narrow and slightly cupped, like a real ray floret
+    petal.scale(0.42, 0.12, 1);
+    petal.translate(0, 0.012, 0.145);
     petal.rotateY((i / petalCount) * Math.PI * 2);
     petals.push(petal);
   }
   const petalDisc = mergeGeometries(petals);
-  petalDisc.rotateX(-Math.PI / 2.6);
-  petalDisc.translate(0, 1.95, 0.05);
+  petalDisc.rotateX(-Math.PI / 2.5);
+  petalDisc.translate(0, 1.78, 0.04);
 
-  const core = new THREE.SphereGeometry(0.19, 12, 10);
-  core.scale(1, 0.45, 1);
-  core.rotateX(-Math.PI / 2.6);
-  core.translate(0, 1.97, 0.1);
+  const core = new THREE.SphereGeometry(0.115, 14, 10);
+  core.scale(1, 0.42, 1);
+  core.rotateX(-Math.PI / 2.5);
+  core.translate(0, 1.79, 0.06);
+
+  const back = new THREE.SphereGeometry(0.1, 10, 8);
+  back.scale(1, 0.5, 1);
+  back.rotateX(-Math.PI / 2.5);
+  back.translate(0, 1.76, 0.0);
 
   return new InstancedField([
-    { geometry: mergeGeometries([stem, leafA, leafB]), material: MAT.stem },
-    { geometry: petalDisc, material: MAT.sunflowerPetal },
-    { geometry: core, material: MAT.sunflowerCore }
+    { geometry: mergeGeometries([stem, leafA, leafB, back]), material: MAT.stem, vary: 0.22 },
+    { geometry: petalDisc, material: MAT.sunflowerPetal, vary: 0.16 },
+    { geometry: core, material: MAT.sunflowerCore, vary: 0.12 }
   ]);
 }
 
@@ -315,6 +360,43 @@ export function createStringLights(ax, ay, az, bx, by, bz, { sag = 1.2, bulbs = 
   }
 
   return group;
+}
+
+const _noise = new ImprovedNoise();
+
+/**
+ * Push vertices along their normals by a noise field, so primitives stop
+ * looking like primitives. Cheap, and applied once at build time.
+ */
+export function roughen(geometry, amount, frequency = 1) {
+  const position = geometry.attributes.position;
+  const normal = geometry.attributes.normal;
+
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i);
+    const y = position.getY(i);
+    const z = position.getZ(i);
+
+    const displacement =
+      _noise.noise(x * frequency, y * frequency, z * frequency) * amount;
+
+    position.setXYZ(
+      i,
+      x + normal.getX(i) * displacement,
+      y + normal.getY(i) * displacement,
+      z + normal.getZ(i) * displacement
+    );
+  }
+
+  position.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/** Deterministic 0..1 hash, so instance variation is stable across reloads. */
+function hashUnit(a, b, salt = 0) {
+  const value = Math.sin(a * 12.9898 + b * 78.233 + salt * 37.719) * 43758.5453;
+  return value - Math.floor(value);
 }
 
 /**

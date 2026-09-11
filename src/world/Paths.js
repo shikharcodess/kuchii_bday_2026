@@ -93,7 +93,7 @@ export class Paths {
     geometry.setIndex(indices);
     geometry.computeBoundingSphere();
 
-    const material = MAT.sandstone.clone();
+    const material = MAT.gravel.clone();
     material.polygonOffset = true;
     material.polygonOffsetFactor = -2;
     material.polygonOffsetUnits = -2;

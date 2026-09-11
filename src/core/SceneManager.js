@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { CONTENT } from '../config/content.js';
+import { Atmosphere } from './Atmosphere.js';
+import { PostFX } from './PostFX.js';
 
 export class SceneManager {
   constructor(container) {
@@ -10,7 +11,10 @@ export class SceneManager {
     this.initScene();
     this.initCamera();
     this.initRenderer();
-    this.initFog();
+
+    // Sky, environment lighting and haze
+    this.atmosphere = new Atmosphere(this.scene, this.renderer);
+    this.postFX = new PostFX(this.renderer, this.scene, this.camera);
 
     this.onResize = this.onResize.bind(this);
     window.addEventListener('resize', this.onResize);
@@ -18,17 +22,10 @@ export class SceneManager {
 
   initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(CONTENT.theme.skyColor);
   }
 
   initCamera() {
-    this.camera = new THREE.PerspectiveCamera(
-      45,
-      this.width / this.height,
-      0.1,
-      500
-    );
-    // Elevated third-person angle overlooking the starter area
+    this.camera = new THREE.PerspectiveCamera(48, this.width / this.height, 0.15, 2000);
     this.camera.position.set(0, 7, 14);
     this.camera.lookAt(0, 1.5, 0);
   }
@@ -42,19 +39,13 @@ export class SceneManager {
     this.renderer.setSize(this.width, this.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Realistic PBR lighting setup
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 0.78;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.container.appendChild(this.renderer.domElement);
-  }
-
-  initFog() {
-    // Soft atmospheric distance haze matching dusk/sunset tones
-    this.scene.fog = new THREE.FogExp2(CONTENT.theme.fogColor, 0.012);
   }
 
   onResize() {
@@ -66,9 +57,11 @@ export class SceneManager {
 
     this.renderer.setSize(this.width, this.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.postFX.setSize(this.width, this.height);
   }
 
-  render() {
-    this.renderer.render(this.scene, this.camera);
+  render(dt) {
+    this.atmosphere.update(this.camera.position);
+    this.postFX.render(dt);
   }
 }
