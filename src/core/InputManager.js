@@ -14,11 +14,13 @@ export class InputManager {
     this.dragging = false;
     this.dragDeltaX = 0;
     this.lastPointerX = 0;
+    this.pointerDownPos = { x: 0, y: 0 };
     this.timeSinceDrag = Infinity;
 
-    // Latched presses, consumed once by whoever handles them
+    // Latched presses & clicks
     this.interactQueued = false;
     this.jumpQueued = false;
+    this.clickQueued = null; // { x, y } in client pixels
 
     this._bind();
   }
@@ -27,7 +29,6 @@ export class InputManager {
     this._onKeyDown = (event) => {
       const code = event.code;
       if (MOVE_CODES.has(code)) event.preventDefault();
-      // Repeat events fire while a key is held; only the first press counts.
       const isRepeat = event.repeat || this.keys.has(code);
       this.keys.add(code);
       if (isRepeat) return;
@@ -38,7 +39,6 @@ export class InputManager {
 
     this._onKeyUp = (event) => this.keys.delete(event.code);
 
-    // If the tab loses focus mid-walk, drop every held key so she doesn't drift.
     this._onBlur = () => {
       this.keys.clear();
       this.dragging = false;
@@ -48,6 +48,8 @@ export class InputManager {
     this._onPointerDown = (event) => {
       this.dragging = true;
       this.lastPointerX = event.clientX;
+      this.pointerDownPos.x = event.clientX;
+      this.pointerDownPos.y = event.clientY;
     };
 
     this._onPointerMove = (event) => {
@@ -57,8 +59,13 @@ export class InputManager {
       this.timeSinceDrag = 0;
     };
 
-    this._onPointerUp = () => {
+    this._onPointerUp = (event) => {
       this.dragging = false;
+      // Check if it was a quick click rather than a camera drag
+      const dist = Math.hypot(event.clientX - this.pointerDownPos.x, event.clientY - this.pointerDownPos.y);
+      if (dist < 8) {
+        this.clickQueued = { x: event.clientX, y: event.clientY };
+      }
     };
 
     window.addEventListener('keydown', this._onKeyDown);
@@ -69,7 +76,6 @@ export class InputManager {
     window.addEventListener('pointerup', this._onPointerUp);
   }
 
-  /** Call once per frame, before reading `move`. */
   update(dt) {
     let x = 0;
     let z = 0;
@@ -90,7 +96,6 @@ export class InputManager {
     this.timeSinceDrag += dt;
   }
 
-  /** Pixels the pointer was dragged since the last read (and resets it). */
   consumeDragDelta() {
     const delta = this.dragDeltaX;
     this.dragDeltaX = 0;
@@ -109,13 +114,22 @@ export class InputManager {
     return queued;
   }
 
-  /** Fired by UI buttons, so a click does the same thing as pressing E. */
+  consumeClick() {
+    const click = this.clickQueued;
+    this.clickQueued = null;
+    return click;
+  }
+
   queueInteract() {
     this.interactQueued = true;
   }
 
   get isMoving() {
     return this.move.x !== 0 || this.move.z !== 0;
+  }
+
+  get isSprinting() {
+    return this.keys.has('ShiftLeft') || this.keys.has('ShiftRight');
   }
 }
 
@@ -128,5 +142,7 @@ const MOVE_CODES = new Set([
   'ArrowDown',
   'ArrowLeft',
   'ArrowRight',
-  'Space'
+  'Space',
+  'ShiftLeft',
+  'ShiftRight'
 ]);

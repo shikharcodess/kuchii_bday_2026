@@ -21,14 +21,14 @@ export class PostFX {
     this.enabled = true;
 
     const size = renderer.getSize(new THREE.Vector2());
-    const pixelRatio = renderer.getPixelRatio();
+    const pixelRatio = Math.min(renderer.getPixelRatio(), 1.5);
 
     const target = new THREE.WebGLRenderTarget(
-      size.x * pixelRatio,
-      size.y * pixelRatio,
+      Math.floor(size.x * pixelRatio),
+      Math.floor(size.y * pixelRatio),
       {
         type: THREE.HalfFloatType,
-        samples: 4
+        samples: 0 // Avoid costly multisampling on high-DPI displays
       }
     );
 
@@ -39,16 +39,16 @@ export class PostFX {
     this.composer.addPass(new RenderPass(scene, camera));
 
     this.bloom = new UnrealBloomPass(
-      new THREE.Vector2(size.x, size.y),
-      0.32, // strength — enough to bloom lanterns, not the whole meadow
-      0.7, // radius
-      0.86 // threshold
+      new THREE.Vector2(Math.floor(size.x * 0.75), Math.floor(size.y * 0.75)),
+      0.28, // subtle, warm glow on lanterns & candles
+      0.6,
+      0.88
     );
     this.composer.addPass(this.bloom);
 
     this.vignette = new ShaderPass(VignetteShader);
-    this.vignette.uniforms.offset.value = 1.05;
-    this.vignette.uniforms.darkness.value = 1.15;
+    this.vignette.uniforms.offset.value = 1.1;
+    this.vignette.uniforms.darkness.value = 1.05;
     this.composer.addPass(this.vignette);
 
     this.composer.addPass(new OutputPass());

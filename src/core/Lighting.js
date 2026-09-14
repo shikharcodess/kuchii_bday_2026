@@ -32,18 +32,18 @@ export class Lighting {
     // A tight shadow frustum that follows the player keeps texel density high,
     // which is what makes the shadows read as sharp contact shadows up close.
     const shadow = this.sunLight.shadow;
-    shadow.mapSize.set(2048, 2048);
+    shadow.mapSize.set(1024, 1024);
     shadow.camera.near = 1;
     shadow.camera.far = 140;
 
-    const extent = 26;
+    const extent = 24;
     shadow.camera.left = -extent;
     shadow.camera.right = extent;
     shadow.camera.top = extent;
     shadow.camera.bottom = -extent;
-    shadow.bias = -0.0002;
-    shadow.normalBias = 0.035;
-    shadow.radius = 1.6;
+    shadow.bias = -0.0003;
+    shadow.normalBias = 0.04;
+    shadow.radius = 1.2;
 
     this.sunLight.target = new THREE.Object3D();
     this.scene.add(this.sunLight.target);
@@ -52,10 +52,18 @@ export class Lighting {
 
   /**
    * Keep the shadow-casting sun centred on the player.
-   * Without this, shadows would only resolve near the world origin.
+   * Throttled so shadow camera matrix recalculations only run when needed.
    */
   update(focusPosition) {
     if (!focusPosition) return;
+
+    if (this._lastX !== undefined) {
+      const dx = focusPosition.x - this._lastX;
+      const dz = focusPosition.z - this._lastZ;
+      if (dx * dx + dz * dz < 0.64) return;
+    }
+    this._lastX = focusPosition.x;
+    this._lastZ = focusPosition.z;
 
     this.sunLight.target.position.set(focusPosition.x, 0, focusPosition.z);
     this.sunLight.target.updateMatrixWorld();

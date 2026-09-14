@@ -17,6 +17,14 @@ export class HUD {
       event.stopPropagation();
       if (this.visible) this.input.queueInteract();
     });
+
+    this.counterText = document.getElementById('surprise-counter-text');
+  }
+
+  updateCounter(found, total) {
+    if (this.counterText) {
+      this.counterText.textContent = `Surprises: ${found} / ${total} ✨`;
+    }
   }
 
   show(label, key = 'E') {

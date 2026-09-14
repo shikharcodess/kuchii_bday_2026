@@ -182,12 +182,90 @@ export function buildFinale(ctx) {
     });
   }
 
-  // Anchors for the Phase 4 finale sequence.
-  group.userData.danceFloor = { x, z, radius: floorRadius };
-  group.userData.avatarAnchors = [
-    { x: x - 0.85, z: z - 0.4 },
-    { x: x + 0.85, z: z - 0.4 }
-  ];
+  // --- Dancing Couple (Hand-Holding & Slow Spin) ---
+  const coupleGroup = new THREE.Group();
+  coupleGroup.position.set(0, 0.28, 0);
+  group.add(coupleGroup);
+
+  // Female avatar
+  const fAvatar = new THREE.Group();
+  fAvatar.position.set(-0.55, 0, 0);
+  coupleGroup.add(fAvatar);
+
+  const fBody = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.42, 0.85, 14), MAT.fabricPink);
+  fBody.position.y = 0.55;
+  fAvatar.add(fBody);
+
+  const fHead = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), MAT.fabricCream);
+  fHead.position.y = 1.15;
+  fAvatar.add(fHead);
+
+  const fHair = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), MAT.darkWood);
+  fHair.position.set(0, 1.2, -0.04);
+  fAvatar.add(fHair);
+
+  // Male avatar (dark turtleneck & trousers)
+  const mAvatar = new THREE.Group();
+  mAvatar.position.set(0.55, 0, 0);
+  coupleGroup.add(mAvatar);
+
+  const mBody = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.95, 14), MAT.darkWood);
+  mBody.position.y = 0.6;
+  mAvatar.add(mBody);
+
+  const mHead = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), MAT.fabricCream);
+  mHead.position.y = 1.25;
+  mAvatar.add(mHead);
+
+  const mHair = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), MAT.darkWood);
+  mHair.position.set(0, 1.32, -0.03);
+  mAvatar.add(mHair);
+
+  // Linked hands in center
+  const hands = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), MAT.fabricCream);
+  hands.position.set(0, 0.68, 0.1);
+  coupleGroup.add(hands);
+
+  // Floating celebration hearts over the dance floor
+  const heartFloaters = [];
+  for (let i = 0; i < 6; i++) {
+    const hMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), MAT.rose);
+    hMesh.position.set(
+      (rand() - 0.5) * 3,
+      1.6 + rand() * 1.5,
+      (rand() - 0.5) * 3
+    );
+    group.add(hMesh);
+    heartFloaters.push(hMesh);
+  }
+
+  // Slow, romantic dance spin
+  ctx.registerAnimated((time, dt) => {
+    coupleGroup.rotation.y = time * 0.35;
+    const bob = Math.sin(time * 2.2) * 0.04;
+    fAvatar.position.y = bob;
+    mAvatar.position.y = -bob;
+
+    heartFloaters.forEach((h, i) => {
+      h.rotation.y = time * (1.5 + i * 0.2);
+      h.position.y = 1.8 + Math.sin(time * 2 + i) * 0.25;
+    });
+  });
+
+  // --- Grand Finale Interaction ---
+  ctx.interactions.register({
+    id: 'finale_dance',
+    x: x,
+    z: z,
+    radius: 7.5,
+    label: 'Dance under the lanterns & celebrate Kuchii!',
+    onEnter: () => {
+      window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'finale_dance' } }));
+    },
+    onExit: () => {
+      ctx.messagePanel?.hide();
+    }
+  });
 
   return group;
 }

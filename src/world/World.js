@@ -96,6 +96,7 @@ export class World {
       interactions: this.services.interactions,
       camera: this.services.camera,
       messagePanel: this.services.messagePanel,
+      surprises: this.services.surprises,
       addCircle: (x, z, r) => this.addCircle(x, z, r),
       addHole: (hole) => this.holes.push(hole),
       addBox: (x, z, halfW, halfD, rotation = 0) => this.addBox(x, z, halfW, halfD, rotation),
@@ -148,60 +149,60 @@ export class World {
     // them — otherwise a stray pine ends up planted through a market stall.
     const clearOfStations = (x, z) =>
       CONTENT.stations.every((station) => {
-        const keepOut = (station.radius ?? 10) + 8;
+        const keepOut = (station.radius ?? 8) + 2.5;
         const dx = x - station.position.x;
         const dz = z - station.position.z;
         return dx * dx + dz * dz > keepOut * keepOut;
       });
 
     // Lanterns marching along the road
-    const lanternSpacing = 16; // metres
+    const lanternSpacing = 13; // metres
     const lanternCount = Math.floor(this.paths.length / lanternSpacing);
     for (let i = 1; i < lanternCount; i++) {
       const t = i / lanternCount;
       if (nearStationT(t)) continue;
 
       const side = i % 2 === 0 ? 1 : -1;
-      const spot = this.paths.offsetAt(t, side * 3.2, new THREE.Vector3());
+      const spot = this.paths.offsetAt(t, side * 2.8, new THREE.Vector3());
       if (!clearOfStations(spot.x, spot.z)) continue;
-      const lantern = createLantern({ height: 2.8 });
+      const lantern = createLantern({ height: 2.7 });
       lantern.position.set(spot.x, 0, spot.z);
       this.scene.add(lantern);
-      this.addCircle(spot.x, spot.z, 0.5);
+      this.addCircle(spot.x, spot.z, 0.45);
     }
 
     // Trees, bushes, rocks and grass scattered in a band either side of the road
-    const scatterCount = 620;
+    const scatterCount = 160;
     for (let i = 0; i < scatterCount; i++) {
       const t = rand();
       const side = rand() < 0.5 ? -1 : 1;
-      const lateral = side * (4.5 + rand() * 26);
+      const lateral = side * (3.6 + rand() * 15);
       const spot = this.paths.offsetAt(t, lateral, new THREE.Vector3());
 
-      if (!this._inBounds(spot.x, spot.z, 3)) continue;
+      if (!this._inBounds(spot.x, spot.z, 2)) continue;
       if (!clearOfStations(spot.x, spot.z)) continue;
 
       const distance = Math.abs(lateral);
       const roll = rand();
 
-      if (roll < 0.28 && distance > 9) {
-        const dusk = t > 0.68; // the pine-heavy final stretch
+      if (roll < 0.28 && distance > 6) {
+        const dusk = t > 0.68;
         const field = dusk || rand() < 0.25 ? this.fields.pines : this.fields.trees;
-        field.add(spot.x, spot.z, { scale: 0.85 + rand() * 0.8, rotY: rand() * Math.PI * 2 });
-        this.addCircle(spot.x, spot.z, 0.85);
-      } else if (roll < 0.5 && distance > 6) {
+        field.add(spot.x, spot.z, { scale: 0.8 + rand() * 0.7, rotY: rand() * Math.PI * 2 });
+        this.addCircle(spot.x, spot.z, 0.75);
+      } else if (roll < 0.5 && distance > 4.5) {
         this.fields.bushes.add(spot.x, spot.z, {
-          scale: 0.6 + rand() * 0.6,
+          scale: 0.5 + rand() * 0.5,
           rotY: rand() * Math.PI * 2
         });
-      } else if (roll < 0.6) {
+      } else if (roll < 0.62) {
         this.fields.rocks.add(spot.x, spot.z, {
-          scale: 0.4 + rand() * 0.8,
+          scale: 0.35 + rand() * 0.6,
           rotY: rand() * Math.PI * 2
         });
       } else {
         this.fields.grass.add(spot.x, spot.z, {
-          scale: 0.6 + rand() * 0.8,
+          scale: 0.5 + rand() * 0.7,
           rotY: rand() * Math.PI * 2
         });
       }
@@ -212,28 +213,27 @@ export class World {
   _buildPerimeter() {
     const rand = seededRandom(8801);
     const { minX, maxX, minZ, maxZ } = this.bounds;
-    const step = 7;
+    const step = 5;
 
     const place = (x, z) => {
-      const jitterX = x + (rand() - 0.5) * 4;
-      const jitterZ = z + (rand() - 0.5) * 4;
+      const jitterX = x + (rand() - 0.5) * 3;
+      const jitterZ = z + (rand() - 0.5) * 3;
       const field = rand() < 0.45 ? this.fields.pines : this.fields.trees;
-      field.add(jitterX, jitterZ, { scale: 1 + rand() * 0.9, rotY: rand() * Math.PI * 2 });
+      field.add(jitterX, jitterZ, { scale: 0.95 + rand() * 0.7, rotY: rand() * Math.PI * 2 });
     };
 
     for (let x = minX; x <= maxX; x += step) {
-      place(x, maxZ + 2);
-      place(x, minZ - 2);
-      // A second, sparser row further out to hide the horizon edge
-      if (rand() < 0.6) place(x + 3, maxZ + 8);
-      if (rand() < 0.6) place(x + 3, minZ - 8);
+      place(x, maxZ + 1.5);
+      place(x, minZ - 1.5);
+      if (rand() < 0.5) place(x + 2.5, maxZ + 6);
+      if (rand() < 0.5) place(x + 2.5, minZ - 6);
     }
 
     for (let z = minZ; z <= maxZ; z += step) {
-      place(minX - 2, z);
-      place(maxX + 2, z);
-      if (rand() < 0.6) place(minX - 8, z + 3);
-      if (rand() < 0.6) place(maxX + 8, z + 3);
+      place(minX - 1.5, z);
+      place(maxX + 1.5, z);
+      if (rand() < 0.5) place(minX - 6, z + 2.5);
+      if (rand() < 0.5) place(maxX + 6, z + 2.5);
     }
   }
 

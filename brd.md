@@ -232,7 +232,6 @@ Claude Code should implement strictly in this order. Do not skip ahead or reorde
 
 ## 14. Explicit Reminders for Claude Code
 
-- Do not use copyrighted character likenesses (Shin-chan, Doremon, or any branded IP) — represent thematically only.
 - Do not add any romantic content beyond hand-holding and a slow dance.
 - Do not invent deeply personal/emotional message copy — leave clearly marked placeholders for the user to fill in himself.
 - Prioritize a working, walkable, testable version at the end of every phase over front-loading visual polish — polish comes in Phase 5, not before.

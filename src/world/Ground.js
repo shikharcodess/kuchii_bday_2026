@@ -22,7 +22,7 @@ export class Ground {
 
   build() {
     const { width, depth, centerZ } = CONTENT.world.ground;
-    const geometry = new THREE.PlaneGeometry(width, depth, 128, 200);
+    const geometry = new THREE.PlaneGeometry(width, depth, 48, 64);
 
     // Bake the ground transform into the geometry, so vertex positions are
     // world coordinates and carving holes is a straight XZ test.

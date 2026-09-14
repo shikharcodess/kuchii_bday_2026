@@ -16,9 +16,9 @@ export class Dog {
 
     this.yaw = Math.PI;
     this.radius = 0.4;
-    this.followDistance = options.followDistance ?? 2.0;
-    this.sideOffset = options.sideOffset ?? 1.1;
-    this.maxSpeed = options.maxSpeed ?? 5.4;
+    this.followDistance = options.followDistance ?? 1.8;
+    this.sideOffset = options.sideOffset ?? 1.0;
+    this.maxSpeed = options.maxSpeed ?? 8.2;
     this.speed = 0;
     this.trotPhase = 0;
     this.moveAmount = 0;

@@ -272,5 +272,20 @@ export function buildNostalgiaCorner(ctx) {
   ctx.addCircle(x - 13, z - 8, 0.9);
   ctx.addCircle(x - 10, z + 10, 0.9);
 
+  // Register interactive surprise at the jukebox
+  ctx.interactions.register({
+    id: 'nostalgia_record',
+    x: x,
+    z: z,
+    radius: 4.8,
+    label: 'Play nostalgic melody & cartoon tape',
+    onEnter: () => {
+      window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'nostalgia_record' } }));
+    },
+    onExit: () => {
+      ctx.messagePanel?.hide();
+    }
+  });
+
   return group;
 }

@@ -6,6 +6,8 @@ import { CameraController } from './core/CameraController.js';
 import { World } from './world/World.js';
 import { Character } from './entities/Character.js';
 import { Dog } from './entities/Dog.js';
+import { GuidanceArrow } from './entities/GuidanceArrow.js';
+import { SurpriseSystem } from './core/SurpriseSystem.js';
 import { DevOptions } from './core/DevOptions.js';
 import { InteractionSystem } from './core/InteractionSystem.js';
 import { HUD } from './ui/HUD.js';
@@ -29,15 +31,24 @@ class App {
     this.interactions = new InteractionSystem(this.input, this.hud);
     this.messagePanel = new MessagePanel();
 
+    this.guidanceArrow = new GuidanceArrow(this.sceneManager.scene);
+    this.surprises = new SurpriseSystem(
+      this.sceneManager.scene,
+      this.sceneManager.camera,
+      this.hud,
+      this.messagePanel,
+      this.guidanceArrow
+    );
+
     this.character = new Character(this.sceneManager.scene);
     this.camera = new CameraController(this.sceneManager.camera, this.character);
 
-    // Stations register their interactions as they build, so the interaction
-    // system, camera and message panel have to exist before the world does.
+    // Stations register their interactions as they build
     this.world = new World(this.sceneManager.scene, {
       interactions: this.interactions,
       camera: this.camera,
-      messagePanel: this.messagePanel
+      messagePanel: this.messagePanel,
+      surprises: this.surprises
     });
 
     this.character.position.copy(DevOptions.spawnPoint() ?? this.world.spawnPoint);
@@ -47,9 +58,9 @@ class App {
 
     this.dog = new Dog(this.sceneManager.scene);
     this.dog.position.set(
-      this.character.position.x + 1.4,
+      this.character.position.x + 1.2,
       0,
-      this.character.position.z + 1.8
+      this.character.position.z + 1.4
     );
 
     this.clock = new THREE.Clock();
@@ -65,9 +76,11 @@ class App {
     const elapsed = this.clock.elapsedTime;
 
     this.input.update(dt);
+    this.surprises.update(this.input, this.character);
     this.interactions.update(this.character);
     this.character.update(dt, this.input, this.camera.yaw, this.world);
     this.dog.update(dt, this.character, this.world);
+    this.guidanceArrow.update(dt, this.character.position);
     this.camera.update(dt, this.input);
     this.lighting.update(this.character.position);
     this.world.update(elapsed, dt);

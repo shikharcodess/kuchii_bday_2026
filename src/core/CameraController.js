@@ -70,21 +70,26 @@ export class CameraController {
     const dragDelta = input ? input.consumeDragDelta() : 0;
     if (dragDelta !== 0) {
       this.yaw -= dragDelta * 0.005;
-    } else if (input && input.isMoving && input.timeSinceDrag > 1.5) {
-      // Swing around to sit behind her direction of travel (hence the + PI).
+    } else if (input && input.isMoving && input.timeSinceDrag > 1.2) {
+      // Swing around to sit behind her direction of travel
       this.yaw = dampAngle(this.yaw, this.target.yaw + Math.PI, this.yawEase, dt);
     }
 
     const pos = this.target.position;
+    const isIndoor = !!this.target.isIndoor;
+    const targetDist = isIndoor ? (CONTENT.camera.indoorDistance || 5.0) : this.distance;
+    const targetHeight = isIndoor ? (CONTENT.camera.indoorHeight || 3.6) : this.height;
+    const targetLookHeight = isIndoor ? 1.2 : this.lookHeight;
+
     this.desired.set(
-      pos.x + Math.sin(this.yaw) * this.distance,
-      pos.y + this.height,
-      pos.z + Math.cos(this.yaw) * this.distance
+      pos.x + Math.sin(this.yaw) * targetDist,
+      pos.y + targetHeight,
+      pos.z + Math.cos(this.yaw) * targetDist
     );
 
     if (!this._initialised) {
       this.camera.position.copy(this.desired);
-      this.lookAt.set(pos.x, pos.y + this.lookHeight, pos.z);
+      this.lookAt.set(pos.x, pos.y + targetLookHeight, pos.z);
       this._initialised = true;
     } else {
       this.camera.position.set(
@@ -95,7 +100,7 @@ export class CameraController {
 
       this.lookAt.set(
         damp(this.lookAt.x, pos.x, this.followEase * 1.4, dt),
-        damp(this.lookAt.y, pos.y + this.lookHeight, this.followEase * 1.4, dt),
+        damp(this.lookAt.y, pos.y + targetLookHeight, this.followEase * 1.4, dt),
         damp(this.lookAt.z, pos.z, this.followEase * 1.4, dt)
       );
     }

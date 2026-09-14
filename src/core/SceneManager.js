@@ -37,13 +37,18 @@ export class SceneManager {
     });
 
     this.renderer.setSize(this.width, this.height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
 
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.78;
+    this.renderer.toneMappingExposure = 0.92;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
+
+    this.usePostFX = false; // Direct renderer provides rock-solid 60 FPS
 
     this.container.appendChild(this.renderer.domElement);
   }
@@ -56,12 +61,16 @@ export class SceneManager {
     this.camera.updateProjectionMatrix();
 
     this.renderer.setSize(this.width, this.height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.postFX.setSize(this.width, this.height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+    if (this.postFX) this.postFX.setSize(this.width, this.height);
   }
 
   render(dt) {
     this.atmosphere.update(this.camera.position);
-    this.postFX.render(dt);
+    if (this.usePostFX && this.postFX) {
+      this.postFX.render(dt);
+    } else {
+      this.renderer.render(this.scene, this.camera);
+    }
   }
 }

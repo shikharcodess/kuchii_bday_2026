@@ -138,6 +138,21 @@ export function buildTravelGlobe(ctx) {
     });
   }
 
+  // Register central globe interaction
+  ctx.interactions.register({
+    id: 'travel_balloon',
+    x,
+    z,
+    radius: 4.5,
+    label: 'Explore Dream Destinations',
+    onEnter: () => {
+      window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'travel_balloon' } }));
+    },
+    onExit: () => {
+      ctx.messagePanel?.hide();
+    }
+  });
+
   return group;
 }
 

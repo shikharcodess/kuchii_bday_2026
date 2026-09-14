@@ -1,20 +1,17 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { CONTENT } from '../config/content.js';
 import { dampAngle, damp, clamp } from '../utils/MathUtils.js';
-import { fabricTexture } from '../world/Textures.js';
 
 /**
- * The player character.
- *
- * Built as a jointed figure rather than a stack of capsules: each limb has a
- * real hinge (hip -> knee -> ankle, shoulder -> elbow -> wrist), which is what
- * makes the walk cycle read as walking and makes a believable sitting pose
- * possible at all. Proportions are life-scaled — the world runs at roughly
- * 1.2 units per metre, so she stands 2.05 units, about 1.7m, at eight and a
- * half heads tall.
- *
- * The model faces +Z, so `group.rotation.y = atan2(dir.x, dir.z)` points her
- * along her direction of travel.
+ * Character Entity.
+ * 
+ * Supports:
+ * 1. Automatic loading of custom GLTF / GLB model if placed in `public/models/character.glb`
+ *    (e.g., exported from Ready Player Me or Mixamo).
+ * 2. Cute, polished stylized character with smooth animations (no T-pose, no leg clipping).
+ * 3. Responsive WASD walking + Shift sprinting + Space jumping.
+ * 4. Automatic indoor detection for cozy house interior camera framing.
  */
 export class Character {
   constructor(scene) {
@@ -24,42 +21,124 @@ export class Character {
 
     this.yaw = Math.PI;
     this.speed = 0;
-    this.radius = 0.42;
+    this.radius = 0.38;
     this.walkPhase = 0;
     this.moveAmount = 0;
 
     // Vertical state (jumping)
     this.verticalVelocity = 0;
-    this.height = 0; // metres above the ground plane
+    this.height = 0;
     this.isGrounded = true;
     this.landingSquash = 0;
 
     // Seated state
-    this.seat = null; // { position, yaw } while sitting
+    this.seat = null;
     this.sitBlend = 0;
+
+    // Indoor state (triggers cozy indoor camera zoom)
+    this.isIndoor = false;
+
+    // Custom GLB support
+    this.isCustomModel = false;
+    this.mixer = null;
+    this.actions = {};
+    this.currentAction = null;
 
     this._direction = new THREE.Vector3();
     this._forward = new THREE.Vector3();
     this._right = new THREE.Vector3();
 
-    this._build();
+    this._buildProceduralModel();
+    this._tryLoadCustomModel();
+
     this.group.rotation.y = this.yaw;
     scene.add(this.group);
   }
 
-  // ---------------------------------------------------------------- building
+  // ---------------------------------------------------------------- GLB Loader
 
-  _build() {
+  _tryLoadCustomModel() {
+    const loader = new GLTFLoader();
+    const candidatePaths = ['/models/character.glb', '/character.glb'];
+
+    const tryNext = (index) => {
+      if (index >= candidatePaths.length) return;
+      const path = candidatePaths[index];
+
+      loader.load(
+        path,
+        (gltf) => {
+          console.log(`Successfully loaded custom 3D character from ${path}`);
+          this.isCustomModel = true;
+
+          // Hide procedural mesh
+          if (this.proceduralGroup) {
+            this.proceduralGroup.visible = false;
+          }
+
+          const model = gltf.scene;
+          model.traverse((child) => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+            }
+          });
+
+          // Compute bounding box and normalize scale to ~1.7m height
+          const bbox = new THREE.Box3().setFromObject(model);
+          const size = bbox.getSize(new THREE.Vector3());
+          const targetHeight = 1.75;
+          const scale = size.y > 0 ? targetHeight / size.y : 1;
+          model.scale.setScalar(scale);
+
+          // Center horizontally
+          model.position.y = 0;
+          this.group.add(model);
+          this.customModel = model;
+
+          // Setup animations if present
+          if (gltf.animations && gltf.animations.length > 0) {
+            this.mixer = new THREE.AnimationMixer(model);
+            gltf.animations.forEach((clip) => {
+              const name = clip.name.toLowerCase();
+              this.actions[name] = this.mixer.clipAction(clip);
+            });
+
+            // Find idle / walk / run
+            const idleClip = Object.keys(this.actions).find((k) => k.includes('idle')) || Object.keys(this.actions)[0];
+            if (idleClip) {
+              this.currentAction = this.actions[idleClip];
+              this.currentAction.play();
+            }
+          }
+        },
+        undefined,
+        () => {
+          tryNext(index + 1);
+        }
+      );
+    };
+
+    tryNext(0);
+  }
+
+  // ---------------------------------------------------- Procedural Cute Avatar
+
+  _buildProceduralModel() {
+    const group = new THREE.Group();
+    this.proceduralGroup = group;
+    this.group.add(group);
+
     const M = this._materials();
     this.mat = M;
 
     const body = new THREE.Group();
     this.body = body;
-    this.group.add(body);
+    group.add(body);
 
-    // Pelvis is the root of the whole figure
+    // Root pelvis
     const pelvis = new THREE.Group();
-    pelvis.position.y = 1.04;
+    pelvis.position.y = 0.95;
     this.pelvis = pelvis;
     body.add(pelvis);
 
@@ -70,65 +149,52 @@ export class Character {
   }
 
   _materials() {
-    const skin = new THREE.MeshStandardMaterial({
-      color: 0xe0a882,
-      roughness: 0.66,
-      metalness: 0.0,
-      envMapIntensity: 0.8
-    });
-
-    const dress = new THREE.MeshStandardMaterial({
-      ...fabricTexture(0xbe8593, 4),
-      bumpScale: 0.12,
-      roughness: 0.88,
-      metalness: 0.0,
-      envMapIntensity: 0.7,
-      side: THREE.DoubleSide
-    });
-
-    const top = new THREE.MeshStandardMaterial({
-      ...fabricTexture(0xf2e6d8, 5),
-      bumpScale: 0.1,
-      roughness: 0.92,
-      metalness: 0.0,
-      envMapIntensity: 0.7
-    });
-
     return {
-      skin,
-      dress,
-      top,
-      hair: new THREE.MeshStandardMaterial({
-        color: 0x241716,
-        roughness: 0.42,
-        metalness: 0.12,
-        envMapIntensity: 1.1
-      }),
-      gold: new THREE.MeshStandardMaterial({
-        color: 0xdcb463,
-        roughness: 0.26,
-        metalness: 0.95,
-        envMapIntensity: 1.4
-      }),
-      shoe: new THREE.MeshStandardMaterial({
-        color: 0x4a3a36,
-        roughness: 0.5,
-        metalness: 0.1,
-        envMapIntensity: 0.9
-      }),
-      eyeWhite: new THREE.MeshStandardMaterial({
-        color: 0xf4f1ec,
-        roughness: 0.22,
+      skin: new THREE.MeshStandardMaterial({
+        color: 0xf6cfba,
+        roughness: 0.55,
         metalness: 0.0
       }),
-      iris: new THREE.MeshStandardMaterial({
-        color: 0x4a2c1c,
-        roughness: 0.18,
+      blush: new THREE.MeshStandardMaterial({
+        color: 0xf59ca7,
+        roughness: 0.6,
+        metalness: 0.0,
+        transparent: true,
+        opacity: 0.55
+      }),
+      dress: new THREE.MeshStandardMaterial({
+        color: 0xd67b8f, // Cute dusty rose
+        roughness: 0.75,
+        metalness: 0.05
+      }),
+      top: new THREE.MeshStandardMaterial({
+        color: 0xfff3e8, // Cream puff top
+        roughness: 0.8,
+        metalness: 0.0
+      }),
+      hair: new THREE.MeshStandardMaterial({
+        color: 0x221718, // Deep soft brunette
+        roughness: 0.35,
+        metalness: 0.1
+      }),
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xf4c466,
+        roughness: 0.22,
+        metalness: 0.85
+      }),
+      shoe: new THREE.MeshStandardMaterial({
+        color: 0x4a322c,
+        roughness: 0.45,
+        metalness: 0.1
+      }),
+      eye: new THREE.MeshStandardMaterial({
+        color: 0x2b1c18,
+        roughness: 0.2,
         metalness: 0.0
       }),
       lip: new THREE.MeshStandardMaterial({
-        color: 0xc4736f,
-        roughness: 0.45,
+        color: 0xdf6f78,
+        roughness: 0.4,
         metalness: 0.0
       })
     };
@@ -140,46 +206,35 @@ export class Character {
 
     for (const side of [-1, 1]) {
       const hip = new THREE.Group();
-      hip.position.set(side * 0.13, 0, 0);
+      hip.position.set(side * 0.11, -0.05, 0);
       this.pelvis.add(hip);
 
-      // Thigh: wider at the hip, narrowing to the knee
-      const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.105, 0.3, 8, 16), M.skin);
-      thigh.scale.set(1.08, 1, 1.02);
-      thigh.position.y = -0.26;
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.065, 0.34, 12), M.skin);
+      thigh.position.y = -0.17;
       thigh.castShadow = true;
       hip.add(thigh);
 
       const knee = new THREE.Group();
-      knee.position.y = -0.52;
+      knee.position.y = -0.34;
       hip.add(knee);
 
-      const shin = new THREE.Mesh(new THREE.CapsuleGeometry(0.078, 0.3, 8, 16), M.skin);
-      shin.position.y = -0.24;
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.052, 0.36, 12), M.skin);
+      shin.position.y = -0.18;
       shin.castShadow = true;
       knee.add(shin);
 
-      const ankle = new THREE.Group();
-      ankle.position.y = -0.46;
-      knee.add(ankle);
-
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.075, 0.27), M.shoe);
-      foot.position.set(0, -0.03, 0.05);
+      // Cute mary-jane shoes
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.2), M.shoe);
+      foot.position.set(0, -0.38, 0.04);
       foot.castShadow = true;
-      ankle.add(foot);
+      knee.add(foot);
 
-      const toe = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 8), M.shoe);
-      toe.scale.set(1, 0.55, 1.15);
-      toe.position.set(0, -0.03, 0.16);
-      toe.castShadow = true;
-      ankle.add(toe);
-
-      // A delicate payal on one ankle — one of her small favourite things
+      // Delicate golden payal (anklet) on right leg
       if (side === 1) {
-        const payal = new THREE.Mesh(new THREE.TorusGeometry(0.082, 0.011, 8, 20), M.gold);
+        const payal = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.008, 8, 16), M.gold);
         payal.rotation.x = Math.PI / 2;
-        payal.position.y = 0.02;
-        ankle.add(payal);
+        payal.position.set(0, -0.33, 0);
+        knee.add(payal);
       }
 
       this.hips.push(hip);
@@ -188,62 +243,37 @@ export class Character {
   }
 
   _buildTorso(M) {
-    // Abdomen tapers into the waist
-    const abdomen = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.16, 8, 18), M.top);
-    abdomen.scale.set(1.12, 1, 0.86);
-    abdomen.position.y = 0.13;
-    abdomen.castShadow = true;
-    this.pelvis.add(abdomen);
-
-    const chest = new THREE.Group();
-    chest.position.y = 0.3;
-    this.chest = chest;
-    this.pelvis.add(chest);
-
-    const ribcage = new THREE.Mesh(new THREE.CapsuleGeometry(0.175, 0.2, 8, 18), M.top);
-    ribcage.scale.set(1.15, 1, 0.82);
-    ribcage.position.y = 0.1;
-    ribcage.castShadow = true;
-    chest.add(ribcage);
-
-    // Shoulder line, so the arms don't sprout from the middle of the torso
-    const shoulders = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.31, 8, 16), M.top);
-    shoulders.rotation.z = Math.PI / 2;
-    shoulders.position.y = 0.24;
-    shoulders.castShadow = true;
-    chest.add(shoulders);
-
-    // Turtleneck collar
-    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.093, 0.13, 16), M.top);
-    collar.position.y = 0.34;
-    collar.castShadow = true;
-    chest.add(collar);
-
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.066, 0.14, 14), M.skin);
-    neck.position.y = 0.4;
-    chest.add(neck);
-
-    // --- Midi dress skirt, gathered at the waist ---
-    const skirtGeo = new THREE.CylinderGeometry(0.185, 0.295, 0.8, 32, 6, true);
-    rippleCloth(skirtGeo, 0.022, 13);
-    const skirt = new THREE.Mesh(skirtGeo, M.dress);
-    skirt.position.y = -0.33;
+    // Cute flared A-line midi dress
+    const skirt = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.44, 0.58, 18, 1, true),
+      M.dress
+    );
+    skirt.position.y = -0.26;
     skirt.castShadow = true;
-    skirt.receiveShadow = true;
-    this.pelvis.add(skirt);
     this.skirt = skirt;
+    this.pelvis.add(skirt);
 
-    const waistband = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.19, 0.1, 24), M.dress);
-    waistband.position.y = 0.03;
-    waistband.castShadow = true;
-    this.pelvis.add(waistband);
+    // Waist ribbon
+    const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.205, 0.205, 0.07, 18), M.gold);
+    belt.position.y = 0.02;
+    this.pelvis.add(belt);
 
-    // Bodice, so the dress and the turtleneck read as one outfit
-    const bodice = new THREE.Mesh(new THREE.CapsuleGeometry(0.153, 0.14, 8, 18), M.dress);
-    bodice.scale.set(1.12, 1, 0.88);
-    bodice.position.y = 0.14;
-    bodice.castShadow = true;
-    this.pelvis.add(bodice);
+    // Torso / chest
+    const chest = new THREE.Group();
+    chest.position.y = 0.18;
+    this.pelvis.add(chest);
+    this.chest = chest;
+
+    const blouse = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.19, 0.32, 14), M.top);
+    blouse.position.y = 0.14;
+    blouse.castShadow = true;
+    chest.add(blouse);
+
+    // Neck
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.075, 0.14, 12), M.skin);
+    neck.position.y = 0.34;
+    neck.castShadow = true;
+    chest.add(neck);
   }
 
   _buildArms(M) {
@@ -252,32 +282,40 @@ export class Character {
 
     for (const side of [-1, 1]) {
       const shoulder = new THREE.Group();
-      shoulder.position.set(side * 0.215, 0.22, 0);
+      shoulder.position.set(side * 0.24, 0.26, 0);
       this.chest.add(shoulder);
 
-      const upperArm = new THREE.Mesh(new THREE.CapsuleGeometry(0.058, 0.2, 8, 14), M.top);
-      upperArm.position.y = -0.17;
+      // Cute puff sleeve
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), M.top);
+      puff.scale.set(1.1, 1.2, 1.1);
+      shoulder.add(puff);
+
+      // Upper arm
+      const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.24, 10), M.skin);
+      upperArm.position.y = -0.13;
       upperArm.castShadow = true;
       shoulder.add(upperArm);
 
       const elbow = new THREE.Group();
-      elbow.position.y = -0.33;
+      elbow.position.y = -0.25;
       shoulder.add(elbow);
 
-      const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.046, 0.2, 8, 14), M.skin);
-      forearm.position.y = -0.16;
+      // Forearm
+      const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.038, 0.22, 10), M.skin);
+      forearm.position.y = -0.11;
       forearm.castShadow = true;
       elbow.add(forearm);
 
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.056, 14, 12), M.skin);
-      hand.scale.set(0.72, 1.15, 0.5);
-      hand.position.y = -0.32;
+      // Hand
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 8), M.skin);
+      hand.position.y = -0.23;
       hand.castShadow = true;
       elbow.add(hand);
 
-      // Resting arm pose: slight outward splay and a soft elbow bend
-      shoulder.rotation.z = side * 0.09;
-      elbow.rotation.x = -0.12;
+      // Initial natural hanging resting pose (NOT T-pose!)
+      shoulder.rotation.z = side * -0.15;
+      shoulder.rotation.x = 0.05;
+      elbow.rotation.x = -0.15;
 
       this.shoulders.push(shoulder);
       this.elbows.push(elbow);
@@ -286,116 +324,64 @@ export class Character {
 
   _buildHead(M) {
     const head = new THREE.Group();
-    head.position.y = 0.52;
-    this.head = head;
+    head.position.set(0, 0.54, 0.02);
     this.chest.add(head);
+    this.head = head;
 
-    // Skull: an egg, not a ball — narrower at the chin
-    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.125, 28, 24), M.skin);
-    skull.scale.set(0.94, 1.12, 1);
-    skull.position.y = 0.08;
-    skull.castShadow = true;
-    head.add(skull);
+    // Face
+    const face = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 18), M.skin);
+    face.scale.set(1, 1.12, 1.05);
+    face.castShadow = true;
+    head.add(face);
 
-    const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 16), M.skin);
-    jaw.scale.set(0.92, 0.82, 0.95);
-    jaw.position.set(0, -0.02, 0.012);
-    jaw.castShadow = true;
-    head.add(jaw);
-
-    // --- Face ---
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.06, 10), M.skin);
-    nose.rotation.x = Math.PI / 2.1;
-    nose.position.set(0, 0.045, 0.108);
-    head.add(nose);
-
+    // Warm expressive eyes
     for (const side of [-1, 1]) {
-      const socket = new THREE.Group();
-      socket.position.set(side * 0.048, 0.082, 0.088);
-      head.add(socket);
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), M.eye);
+      eye.position.set(side * 0.065, 0.02, 0.165);
+      head.add(eye);
 
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.022, 14, 12), M.eyeWhite);
-      white.scale.set(1, 0.78, 0.7);
-      socket.add(white);
+      // Soft blushing cheeks
+      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.035, 12), M.blush);
+      blush.position.set(side * 0.09, -0.04, 0.162);
+      blush.rotation.y = side * 0.45;
+      head.add(blush);
 
-      const iris = new THREE.Mesh(new THREE.SphereGeometry(0.011, 12, 10), M.iris);
-      iris.position.z = 0.014;
-      socket.add(iris);
-
-      // Upper lid, which also gives the eye a lash line
-      const lid = new THREE.Mesh(new THREE.SphereGeometry(0.0245, 14, 10), M.skin);
-      lid.scale.set(1, 0.5, 0.75);
-      lid.position.y = 0.014;
-      socket.add(lid);
-
-      const brow = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.008, 0.012), M.hair);
-      brow.position.set(side * 0.05, 0.115, 0.1);
-      brow.rotation.z = -side * 0.12;
-      head.add(brow);
+      // Small gold earrings
+      const earring = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), M.gold);
+      earring.position.set(side * 0.185, 0.01, -0.02);
+      head.add(earring);
     }
 
-    const lips = new THREE.Mesh(new THREE.SphereGeometry(0.026, 14, 10), M.lip);
-    lips.scale.set(1.15, 0.4, 0.42);
-    lips.position.set(0, -0.005, 0.1);
-    head.add(lips);
+    // Gentle smile
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.007, 6, 12, Math.PI), M.lip);
+    smile.rotation.x = Math.PI * 0.9;
+    smile.position.set(0, -0.07, 0.17);
+    head.add(smile);
 
-    // --- Hair: open at the face, full at the back ---
-    const faceGap = 0.72;
-    const hairShell = new THREE.Mesh(
-      new THREE.SphereGeometry(
-        0.138,
-        28,
-        22,
-        Math.PI / 2 + faceGap,
-        Math.PI * 2 - faceGap * 2
-      ),
-      M.hair
-    );
-    hairShell.scale.set(0.97, 1.12, 1.04);
-    hairShell.position.y = 0.075;
-    hairShell.castShadow = true;
-    head.add(hairShell);
+    // Hair: lovely layered dark hair
+    const hairCrown = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 16), M.hair);
+    hairCrown.scale.set(1.06, 1.15, 1.15);
+    hairCrown.position.set(0, 0.05, -0.04);
+    hairCrown.castShadow = true;
+    head.add(hairCrown);
 
-    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.132, 22, 16), M.hair);
-    fringe.scale.set(0.99, 0.62, 1.02);
-    fringe.position.set(0, 0.13, 0.006);
-    fringe.castShadow = true;
-    head.add(fringe);
-
-    // Length falling past the shoulders, in two soft strands
-    const lengthGeo = new THREE.CapsuleGeometry(0.062, 0.3, 8, 14);
+    // Hair strands flowing down the back and sides
     for (const side of [-1, 1]) {
-      const strand = new THREE.Mesh(lengthGeo, M.hair);
-      strand.scale.set(1.1, 1, 0.75);
-      strand.position.set(side * 0.075, -0.1, -0.075);
-      strand.rotation.x = -0.12;
-      strand.rotation.z = side * 0.1;
+      const strand = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.38, 6, 10), M.hair);
+      strand.position.set(side * 0.11, -0.15, -0.08);
+      strand.rotation.z = side * 0.08;
       strand.castShadow = true;
       head.add(strand);
     }
 
-    const bulk = new THREE.Mesh(new THREE.SphereGeometry(0.115, 20, 16), M.hair);
-    bulk.scale.set(1, 1.25, 0.8);
-    bulk.position.set(0, -0.045, -0.08);
-    bulk.castShadow = true;
-    head.add(bulk);
-
-    // Small earrings
-    for (const side of [-1, 1]) {
-      const earring = new THREE.Mesh(new THREE.SphereGeometry(0.017, 10, 8), M.gold);
-      earring.position.set(side * 0.122, 0.015, 0.008);
-      head.add(earring);
-    }
+    // Cute sunflower hairclip
+    const clip = new THREE.Mesh(new THREE.SphereGeometry(0.042, 10, 10), M.gold);
+    clip.position.set(0.16, 0.14, 0.1);
+    head.add(clip);
   }
 
-  // ---------------------------------------------------------------- movement
+  // ---------------------------------------------------------------- Movement
 
-  /**
-   * @param {number} dt delta time in seconds
-   * @param {InputManager} input
-   * @param {number} cameraYaw camera orbit angle, so movement is camera-relative
-   * @param {World} world provides boundary + prop collision
-   */
   update(dt, input, cameraYaw, world) {
     if (this.seat) {
       this._updateSeated(dt);
@@ -404,7 +390,7 @@ export class Character {
 
     this.sitBlend = damp(this.sitBlend, 0, 9, dt);
 
-    // Camera-relative basis: W walks away from the camera, D walks screen-right
+    // Camera-relative basis
     this._forward.set(-Math.sin(cameraYaw), 0, -Math.cos(cameraYaw));
     this._right.set(Math.cos(cameraYaw), 0, -Math.sin(cameraYaw));
 
@@ -414,10 +400,13 @@ export class Character {
       .addScaledVector(this._right, input.move.x);
 
     const moving = this._direction.lengthSq() > 0.0001;
+    const isSprinting = input.isSprinting && moving;
+
+    const targetSpeed = isSprinting ? CONTENT.world.sprintSpeed : CONTENT.world.walkSpeed;
+
     if (moving) {
       this._direction.normalize();
-      // Slightly slower in the air, so a jump doesn't double as a sprint
-      this.speed = CONTENT.world.walkSpeed * (this.isGrounded ? 1 : 0.85);
+      this.speed = targetSpeed * (this.isGrounded ? 1 : 0.85);
 
       const targetYaw = Math.atan2(this._direction.x, this._direction.z);
       this.yaw = dampAngle(this.yaw, targetYaw, CONTENT.world.turnSpeed, dt);
@@ -435,10 +424,18 @@ export class Character {
     this.group.rotation.y = this.yaw;
     this.position.y = this.height;
 
-    const targetBlend = moving && this.isGrounded ? 1 : 0;
-    this.moveAmount += (targetBlend - this.moveAmount) * Math.min(1, dt * 9);
+    // Check indoor boundary (House is around x: -14 to -6, z: -10 to 2)
+    this.isIndoor = (this.position.x > -15.5 && this.position.x < -5.5 &&
+                     this.position.z > -10.5 && this.position.z < 2.0);
 
-    this._animate(dt);
+    const targetBlend = moving && this.isGrounded ? (isSprinting ? 1.4 : 1.0) : 0;
+    this.moveAmount += (targetBlend - this.moveAmount) * Math.min(1, dt * 11);
+
+    if (this.mixer) {
+      this.mixer.update(dt);
+    } else {
+      this._animate(dt);
+    }
   }
 
   _updateJump(dt, input) {
@@ -454,8 +451,7 @@ export class Character {
       this.height += this.verticalVelocity * dt;
 
       if (this.height <= 0) {
-        // Landing: squash proportional to how hard she came down
-        this.landingSquash = clamp(-this.verticalVelocity / jump.velocity, 0, 1) * 0.16;
+        this.landingSquash = clamp(-this.verticalVelocity / jump.velocity, 0, 1) * 0.14;
         this.height = 0;
         this.verticalVelocity = 0;
         this.isGrounded = true;
@@ -465,9 +461,6 @@ export class Character {
     this.landingSquash = damp(this.landingSquash, 0, 11, dt);
   }
 
-  // ----------------------------------------------------------------- sitting
-
-  /** Sit on a seat: `{ x, z, y, yaw }` in world space. */
   sitOn(seat) {
     this.seat = seat;
     this.verticalVelocity = 0;
@@ -479,8 +472,6 @@ export class Character {
 
   standUp() {
     if (!this.seat) return;
-
-    // Step forward off the seat so she isn't left standing inside it
     const seat = this.seat;
     this.position.x = seat.x + Math.sin(seat.yaw) * 0.85;
     this.position.z = seat.z + Math.cos(seat.yaw) * 0.85;
@@ -494,7 +485,6 @@ export class Character {
 
   _updateSeated(dt) {
     const seat = this.seat;
-
     this.position.x = damp(this.position.x, seat.x, 8, dt);
     this.position.z = damp(this.position.z, seat.z, 8, dt);
     this.position.y = damp(this.position.y, seat.y ?? 0, 8, dt);
@@ -506,137 +496,46 @@ export class Character {
     this._animate(dt);
   }
 
-  // --------------------------------------------------------------- animation
-
   _animate(dt) {
     const walk = this.moveAmount;
     const sit = this.sitBlend;
-    const air = this.isGrounded ? 0 : 1;
 
-    this.walkPhase += dt * (4.4 + this.speed * 0.55) * walk;
+    this.walkPhase += dt * (5.5 + this.speed * 0.6) * walk;
     const cycle = Math.sin(this.walkPhase);
     const cycleOff = Math.sin(this.walkPhase + Math.PI);
 
-    // --- Legs ---
-    // Thighs swing; knees bend on the return swing, straighten on the stride.
-    const thighSwing = 0.58 * walk;
-    const kneeBend = 0.95 * walk;
+    // Legs swing
+    const legSwing = 0.52 * walk;
+    this.hips[0].rotation.x = cycle * legSwing;
+    this.hips[1].rotation.x = cycleOff * legSwing;
+    this.knees[0].rotation.x = -Math.max(0, -cycle) * 0.7 * walk;
+    this.knees[1].rotation.x = -Math.max(0, -cycleOff) * 0.7 * walk;
 
-    this.hips[0].rotation.x = cycle * thighSwing;
-    this.hips[1].rotation.x = cycleOff * thighSwing;
-    this.knees[0].rotation.x = -Math.max(0, -cycle) * kneeBend - 0.06 * walk;
-    this.knees[1].rotation.x = -Math.max(0, -cycleOff) * kneeBend - 0.06 * walk;
+    // Natural arm counter-swing
+    const armSwing = 0.48 * walk;
+    this.shoulders[0].rotation.x = 0.05 + cycleOff * armSwing;
+    this.shoulders[1].rotation.x = 0.05 + cycle * armSwing;
+    this.shoulders[0].rotation.z = -0.15 - Math.abs(cycleOff) * 0.08 * walk;
+    this.shoulders[1].rotation.z = 0.15 + Math.abs(cycle) * 0.08 * walk;
+    this.elbows[0].rotation.x = -0.15 - Math.max(0, cycleOff) * 0.3 * walk;
+    this.elbows[1].rotation.x = -0.15 - Math.max(0, cycle) * 0.3 * walk;
 
-    // In the air, she tucks: front knee up, back leg trailing
-    if (air > 0 || this.verticalVelocity !== 0) {
-      const rise = clamp(this.verticalVelocity / CONTENT.world.jump.velocity, -1, 1);
-      const tuck = (1 - Math.abs(rise)) * 0.5 + 0.35;
-      this.hips[0].rotation.x = THREE.MathUtils.lerp(this.hips[0].rotation.x, -0.75 * tuck, air);
-      this.hips[1].rotation.x = THREE.MathUtils.lerp(this.hips[1].rotation.x, 0.3 * tuck, air);
-      this.knees[0].rotation.x = THREE.MathUtils.lerp(this.knees[0].rotation.x, -1.15 * tuck, air);
-      this.knees[1].rotation.x = THREE.MathUtils.lerp(this.knees[1].rotation.x, -0.5 * tuck, air);
-    }
-
-    // Seated: thighs forward and level, knees folded down
-    if (sit > 0.001) {
+    // Seated pose
+    if (sit > 0.01) {
       for (let i = 0; i < 2; i++) {
-        const spread = i === 0 ? -0.07 : 0.07;
-        this.hips[i].rotation.x = THREE.MathUtils.lerp(this.hips[i].rotation.x, -1.5, sit);
-        this.hips[i].rotation.z = THREE.MathUtils.lerp(this.hips[i].rotation.z, spread, sit);
-        this.knees[i].rotation.x = THREE.MathUtils.lerp(this.knees[i].rotation.x, -1.45, sit);
+        this.hips[i].rotation.x = THREE.MathUtils.lerp(this.hips[i].rotation.x, -1.4, sit);
+        this.knees[i].rotation.x = THREE.MathUtils.lerp(this.knees[i].rotation.x, -1.35, sit);
+        this.shoulders[i].rotation.x = THREE.MathUtils.lerp(this.shoulders[i].rotation.x, -0.3, sit);
+        this.elbows[i].rotation.x = THREE.MathUtils.lerp(this.elbows[i].rotation.x, -0.9, sit);
       }
-
-      // The skirt has no simulation, so it is reshaped by hand: shorter and
-      // wider, as if the fabric were draping over her knees. Without this the
-      // hem hangs straight through the bench and she reads as standing.
-      const drape = THREE.MathUtils.lerp(1, 0.52, sit);
-      this.skirt.scale.set(
-        THREE.MathUtils.lerp(1, 1.3, sit),
-        drape,
-        THREE.MathUtils.lerp(1, 1.15, sit)
-      );
-      this.skirt.position.y = THREE.MathUtils.lerp(-0.33, -0.14, sit);
-    } else {
-      this.hips[0].rotation.z = 0;
-      this.hips[1].rotation.z = 0;
-      this.skirt.scale.set(1, 1, 1);
-      this.skirt.position.y = -0.33;
     }
 
-    // --- Arms: counter-swing to the legs, with a trailing elbow ---
-    const armSwing = 0.5 * walk;
-    this.shoulders[0].rotation.x = cycleOff * armSwing;
-    this.shoulders[1].rotation.x = cycle * armSwing;
-    this.elbows[0].rotation.x = -0.12 - Math.max(0, cycleOff) * 0.5 * walk;
-    this.elbows[1].rotation.x = -0.12 - Math.max(0, cycle) * 0.5 * walk;
-
-    if (air > 0) {
-      this.shoulders[0].rotation.x = THREE.MathUtils.lerp(this.shoulders[0].rotation.x, -0.6, air);
-      this.shoulders[1].rotation.x = THREE.MathUtils.lerp(this.shoulders[1].rotation.x, -0.9, air);
-      this.shoulders[0].rotation.z = THREE.MathUtils.lerp(-0.09, -0.5, air);
-      this.shoulders[1].rotation.z = THREE.MathUtils.lerp(0.09, 0.5, air);
-    } else {
-      this.shoulders[0].rotation.z = damp(this.shoulders[0].rotation.z, -0.09, 10, dt);
-      this.shoulders[1].rotation.z = damp(this.shoulders[1].rotation.z, 0.09, 10, dt);
-    }
-
-    if (sit > 0.001) {
-      // Hands resting in her lap
-      this.shoulders[0].rotation.x = THREE.MathUtils.lerp(this.shoulders[0].rotation.x, -0.45, sit);
-      this.shoulders[1].rotation.x = THREE.MathUtils.lerp(this.shoulders[1].rotation.x, -0.45, sit);
-      this.shoulders[0].rotation.z = THREE.MathUtils.lerp(this.shoulders[0].rotation.z, -0.22, sit);
-      this.shoulders[1].rotation.z = THREE.MathUtils.lerp(this.shoulders[1].rotation.z, 0.22, sit);
-      this.elbows[0].rotation.x = THREE.MathUtils.lerp(this.elbows[0].rotation.x, -1.15, sit);
-      this.elbows[1].rotation.x = THREE.MathUtils.lerp(this.elbows[1].rotation.x, -1.15, sit);
-    }
-
-    // --- Body carriage ---
+    // Gentle breathing & walking bob
     const now = performance.now() * 0.001;
-    const bob = Math.abs(Math.cos(this.walkPhase)) * 0.035 * walk;
-    const breathe = Math.sin(now * 1.5) * 0.008 * (1 - walk);
+    const bob = Math.abs(Math.cos(this.walkPhase)) * 0.04 * walk;
+    const breathe = Math.sin(now * 2.2) * 0.01 * (1 - walk);
 
-    this.pelvis.position.y = 1.04 + bob + breathe - this.landingSquash - sit * 0.5;
-    this.pelvis.rotation.y = cycle * 0.07 * walk;
-    this.pelvis.rotation.z = cycle * 0.03 * walk;
-
-    this.chest.rotation.y = -cycle * 0.09 * walk;
-    this.chest.rotation.x = 0.04 * walk + sit * 0.06;
-
-    // Landing squash: she compresses through the knees, not through her head
-    const squash = 1 - this.landingSquash * 1.4;
-    this.body.scale.set(1 / Math.sqrt(squash), squash, 1 / Math.sqrt(squash));
-
-    // Head: settles level, with a small idle drift and a look toward her path
-    this.head.rotation.y = cycle * 0.06 * walk + Math.sin(now * 0.6) * 0.05 * (1 - walk);
-    this.head.rotation.x = -0.03 * walk + Math.sin(now * 0.9) * 0.02 * (1 - walk) + sit * 0.05;
+    this.pelvis.position.y = 0.95 + bob + breathe - this.landingSquash - sit * 0.42;
+    this.head.rotation.y = cycle * 0.05 * walk + Math.sin(now * 0.8) * 0.03 * (1 - walk);
   }
-}
-
-/**
- * Give a cloth cylinder soft vertical folds, so the skirt doesn't read as a
- * perfect lampshade. Folds deepen toward the hem.
- */
-function rippleCloth(geometry, amount, folds) {
-  const position = geometry.attributes.position;
-  const bounds = geometry.boundingBox ?? (geometry.computeBoundingBox(), geometry.boundingBox);
-  const height = bounds.max.y - bounds.min.y;
-
-  for (let i = 0; i < position.count; i++) {
-    const x = position.getX(i);
-    const y = position.getY(i);
-    const z = position.getZ(i);
-
-    const angle = Math.atan2(z, x);
-    const drop = (bounds.max.y - y) / height; // 0 at waist, 1 at hem
-    const wave = Math.sin(angle * folds) * amount * drop;
-
-    const radial = Math.hypot(x, z);
-    if (radial > 0.0001) {
-      position.setXYZ(i, x + (x / radial) * wave, y, z + (z / radial) * wave);
-    }
-  }
-
-  position.needsUpdate = true;
-  geometry.computeVertexNormals();
-  return geometry;
 }

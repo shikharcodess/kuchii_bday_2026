@@ -9,31 +9,29 @@ export const CONTENT = {
   recipient: {
     name: 'Shivani',
     nickname: 'Kuchii',
-    birthday: 'October 13',
+    birthday: 'September 22',
     tone: 'warm, playful, sincere'
   },
 
   theme: {
     // Physical sky settings — a low sun for warm, raking golden-hour light.
     sky: {
-      // High enough that shadows stay readable: at single-digit elevations a
-      // 5-unit tree casts a 30-unit shadow and half the map goes dark.
-      elevation: 26,
-      azimuth: 38, // behind the walker, so she isn't looking into the sun
-      turbidity: 3.6,
-      rayleigh: 1.6,
-      mieCoefficient: 0.006,
+      elevation: 28,
+      azimuth: 40,
+      turbidity: 3.2,
+      rayleigh: 1.4,
+      mieCoefficient: 0.005,
       mieDirectionalG: 0.84,
       hazeColor: 0xc3b79c,
-      hazeDensity: 0.0034,
+      hazeDensity: 0.003,
       groundBounce: 0x5e5340,
-      environmentIntensity: 0.8
+      environmentIntensity: 0.9
     },
 
-    sunColor: 0xffe0b8, // warm late-afternoon sun
-    sunIntensity: 2.9,
-    ambientSky: 0xd8e4f0,
-    ambientGround: 0x6b5a3f,
+    sunColor: 0xffe2bd,
+    sunIntensity: 2.8,
+    ambientSky: 0xdde7f2,
+    ambientGround: 0x6e5c42,
 
     accentGold: '#f6c878',
     accentPink: '#f4a261',
@@ -41,88 +39,182 @@ export const CONTENT = {
   },
 
   /**
-   * World scale & feel.
-   * The map is intentionally long: at `walkSpeed` the full station-to-station
-   * route is roughly 2 minutes of pure walking, which lands at 3-4 minutes
-   * once she stops to look around at each station.
+   * World scale & feel:
+   * A cozy, intimate ~130m village walk with responsive movement speeds.
    */
   world: {
-    walkSpeed: 3.6, // units per second
-    turnSpeed: 9.0, // how quickly the character faces her travel direction
+    walkSpeed: 5.4, // fast & nimble
+    sprintSpeed: 8.0, // hold Shift to run
+    turnSpeed: 18.0, // crisp, immediate steering
     jump: {
-      velocity: 6.2, // initial upward speed
-      gravity: 19.0 // tuned for a snappy arc rather than a floaty one
+      velocity: 6.8,
+      gravity: 21.0
     },
-    ground: { width: 210, depth: 480, centerZ: -170 },
-    bounds: { minX: -72, maxX: 72, minZ: -368, maxZ: 30 },
-    pathWidth: 4.4
+    ground: { width: 90, depth: 165, centerZ: -62 },
+    bounds: { minX: -38, maxX: 38, minZ: -142, maxZ: 22 },
+    pathWidth: 3.6
   },
 
   camera: {
-    distance: 9.5,
-    height: 5.2,
-    lookHeight: 1.6,
-    followEase: 4.5, // position smoothing
-    yawEase: 1.6 // how gently the camera swings behind her
+    distance: 6.8,
+    height: 4.0,
+    lookHeight: 1.4,
+    indoorDistance: 5.0,
+    indoorHeight: 3.4,
+    followEase: 9.5,
+    yawEase: 5.5
   },
 
-  // Stations configuration (placeholder text ready for future phases)
+  // Stations configuration
   stations: [
     {
       id: 'house',
-      title: 'Our Starting Porch',
+      title: 'Our Cozy Cottage & Porch',
       position: { x: 0, z: 0 },
-      radius: 9,
-      prompt: 'Welcome to your world, Kuchii',
-      message: 'Welcome to your world — a little place built just for you to wander through.'
+      radius: 8,
+      prompt: 'Explore the cottage',
+      message: 'Welcome to your world, Kuchii. Step inside the cottage — every corner was built with love for you.'
     },
     {
       id: 'sunflower_garden',
       title: 'Sunflower Garden & Getting Ready Corner',
-      position: { x: -6, z: -58 },
-      radius: 10,
-      prompt: 'Admire the sunflowers',
-      message: 'Sunflowers standing tall in the sunlight, tiny sparkling payals, and your favorite little details.'
+      position: { x: -4, z: -24 },
+      radius: 8,
+      prompt: 'Admire the sunflowers & koi pond',
+      message: 'Sunflowers dancing in the breeze, golden & baby-pink sparkles, and delicate payals. Your absolute favorite place.'
     },
     {
       id: 'dream_travel',
-      title: 'Dream Travel Globe',
-      position: { x: 26, z: -116 },
-      radius: 11,
-      prompt: 'Spin the globe',
-      message: 'From the Amazon canopy to Paris and the quiet mountain peaks — the world we dream of exploring together.'
+      title: 'Dream Travel Pavilion',
+      position: { x: 12, z: -46 },
+      radius: 8.5,
+      prompt: 'Explore dream destinations',
+      message: 'From the Amazon rainforest and Tokyo to the Swiss Alps and Paris — all the adventures waiting for us.'
     },
     {
       id: 'nostalgia_corner',
       title: 'Nostalgia Corner',
-      position: { x: -26, z: -176 },
-      radius: 10,
-      prompt: 'Tune into melodies',
-      message: 'Old cartoon laughs, movie nights, tunes that stay stuck in our heads, and pure comfort.'
+      position: { x: -12, z: -68 },
+      radius: 8,
+      prompt: 'Tune into nostalgic memories',
+      message: 'Spy x Family, Shin-chan & Doraemon laughs, movie marathons, and melodies that make you smile.'
     },
     {
       id: 'food_street',
-      title: 'Food Street',
-      position: { x: 14, z: -232 },
-      radius: 10,
-      prompt: 'Smell the spices',
-      message: 'Spice level: her level. Fragrant West Bengal prawn curry and warm string lights.'
+      title: 'Street of Flavors & Food Bazaar',
+      position: { x: 9, z: -88 },
+      radius: 9.5,
+      prompt: 'Explore the Food Bazaar',
+      message: 'Gourmet burgers, spicy crunchy pani puri & chaat, artisan strawberry cheesecakes, and crispy golden chicken — every craving made with love for you!'
     },
     {
       id: 'road_to_us',
       title: 'The Road That Led To Us',
-      position: { x: 0, z: -286 },
-      radius: 12,
-      prompt: 'Walk along the quiet path',
-      message: 'Step by step, through every moment of patience and gentle trust.'
+      position: { x: 0, z: -106 },
+      radius: 8.5,
+      prompt: 'Walk the gentle path',
+      message: 'Step by step, through patience, understanding, and finding complete safety in each other.'
     },
     {
       id: 'finale',
       title: 'Under The Starlit Canopy',
-      position: { x: 0, z: -344 },
-      radius: 12,
-      prompt: 'Step onto the dance floor',
-      message: 'Happy Birthday, Shivani! (User personal message placeholder)'
+      position: { x: 0, z: -126 },
+      radius: 10,
+      prompt: 'Step onto the dance stage',
+      message: 'Happy Birthday, my Kuchii! Holding hands, dancing under the lanterns, forever celebrating you.'
+    }
+  ],
+
+  // Virtual surprises to find across the world
+  surprises: [
+    {
+      id: 'house_letter',
+      title: 'A Secret Letter on the Desk',
+      category: 'Heartfelt Note',
+      hint: 'Inside the cottage on the study desk',
+      icon: '💌',
+      text: 'My Kuchii, from the moment we started talking, you brought so much warmth, laughter, and light into my life. Happy Birthday to the strongest, kindest, most brilliant girl!'
+    },
+    {
+      id: 'house_gallery',
+      title: 'Our Gallery Wall',
+      category: 'Future Home Memory',
+      hint: 'Living room wall inside the house',
+      icon: '🖼️',
+      text: 'Remember when we talked about our future home? A server room, a library, a garden, and a grand gallery wall for paintings. Here is the first frame of our forever.'
+    },
+    {
+      id: 'house_fireplace',
+      title: 'Warm Hearth & Cozy Socks',
+      category: 'Comfort & Love',
+      hint: 'Next to the fireplace inside the house',
+      icon: '🧦',
+      text: 'A warm crackling fire, the coziest fuzzy socks, and someone who will always keep you safe and warm no matter how cold the world gets.'
+    },
+    {
+      id: 'sunflower_sparkle',
+      title: 'Golden Sparkles & Delicate Payal',
+      category: 'Her Favorite Details',
+      hint: 'Vanity table by the sunflower garden',
+      icon: '✨',
+      text: 'Golden and baby-pink glitter eyeshadow, transparent polish with tiny stars, and delicate anklets that chime with every happy step you take.'
+    },
+    {
+      id: 'travel_balloon',
+      title: 'Hot Air Balloons in Cappadocia',
+      category: 'Dream Travel',
+      hint: 'At the Dream Travel Pavilion',
+      icon: '🎈',
+      text: 'Watching the sunrise together over Turkey, wandering through Bruges, and walking around ancient South Indian temples.'
+    },
+    {
+      id: 'nostalgia_record',
+      title: 'When I Fly Towards You',
+      category: 'Sweet Melody',
+      hint: 'Music player in Nostalgia Corner',
+      icon: '🎵',
+      text: 'Your favorite comfort songs and anime laughs. Whenever this melody plays, it feels like flying towards you.'
+    },
+    {
+      id: 'food_burger',
+      title: 'The Ultimate Gourmet Burger & Fries',
+      category: 'Foodie Craving',
+      hint: 'At the Burger Shack counter',
+      icon: '🍔',
+      text: 'Fresh toasted sesame bun, juicy grilled patty, melted cheddar, and a basket of crispy golden fries with extra ketchup — always ready for our burger dates!'
+    },
+    {
+      id: 'food_panipuri',
+      title: 'Pani Puri & Chaat Chatori',
+      category: 'Street Food Love',
+      hint: 'At the Pani Puri cart',
+      icon: '🥣',
+      text: 'Extra spicy teekha pani, sweet sonth chutney, crunchy puris filled with spiced aloo and sev. Nobody can beat Kuchii at a pani puri challenge!'
+    },
+    {
+      id: 'food_cheesecake',
+      title: 'Artisan Strawberry Cheesecake',
+      category: 'Sweet Tooth Heaven',
+      hint: 'Inside the Bakery glass display',
+      icon: '🍰',
+      text: 'Velvety New York style cheesecake with a golden buttery graham crust and glistening ruby strawberry glaze. The sweetest treat for the sweetest girl.'
+    },
+    {
+      id: 'food_chicken',
+      title: 'Crispy Sizzling Chicken',
+      category: 'Flavor Feast',
+      hint: 'At the Crispy Chicken grill',
+      icon: '🍗',
+      text: 'Sizzling hot, crunchy seasoned fried chicken and tender grilled skewers with peri-peri dip. Maximum flavor for my absolute food freak!'
+    },
+    {
+      id: 'finale_dance',
+      title: 'Dance Under the Lanterns',
+      category: 'The Grand Surprise',
+      hint: 'At the Finale Gazebo',
+      icon: '💖',
+      text: 'September 22 — the day the most wonderful person was born. Happy Birthday Kuchii! Thank you for loving me, for trusting me, and for being my home.'
     }
   ]
 };
+

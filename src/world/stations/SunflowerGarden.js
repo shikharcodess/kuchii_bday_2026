@@ -25,15 +25,15 @@ export function buildSunflowerGarden(ctx) {
 
   // --- Sunflowers: a scattered border, not a field ---
   const field = ctx.fields.sunflowers;
-  const startT = ctx.paths.tNearest(x, z + 30);
-  const endT = ctx.paths.tNearest(x, z - 30);
+  const startT = ctx.paths.tNearest(x, z + 9);
+  const endT = ctx.paths.tNearest(x, z - 9);
   const spot = new THREE.Vector3();
 
   const clearOfFeatures = (px, pz) =>
-    Math.hypot(px - pondCenter.x, pz - pondCenter.z) > 9 &&
-    Math.hypot(px - patioCenter.x, pz - patioCenter.z) > 5.5;
+    Math.hypot(px - pondCenter.x, pz - pondCenter.z) > 8 &&
+    Math.hypot(px - patioCenter.x, pz - patioCenter.z) > 4.5;
 
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 65; i++) {
     const t = startT + (endT - startT) * rand();
     const side = rand() < 0.5 ? -1 : 1;
     // Held back from the road edge so the verge stays clear and walkable
@@ -232,6 +232,21 @@ export function buildSunflowerGarden(ctx) {
   patio.add(patioLight);
 
   ctx.addCircle(patioCenter.x, patioCenter.z, 2.4);
+
+  // Register interactive surprise at the vanity
+  ctx.interactions.register({
+    id: 'sunflower_sparkle',
+    x: patioCenter.x,
+    z: patioCenter.z,
+    radius: 3.2,
+    label: 'Admire vanity & sparkling payal',
+    onEnter: () => {
+      window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'sunflower_sparkle' } }));
+    },
+    onExit: () => {
+      ctx.messagePanel?.hide();
+    }
+  });
 
   // --- Surroundings ---
   ctx.scene.add(createFenceRun(x - 20, z - 24, x - 7, z - 24));

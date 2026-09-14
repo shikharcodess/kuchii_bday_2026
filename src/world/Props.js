@@ -37,10 +37,10 @@ export class InstancedField {
 
     const color = new THREE.Color();
 
-    const meshes = this.parts.map(({ geometry, material, vary = 0 }) => {
+    const meshes = this.parts.map(({ geometry, material, vary = 0, castShadow = false, receiveShadow = true }) => {
       const mesh = new THREE.InstancedMesh(geometry, material, this.instances.length);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
+      mesh.castShadow = castShadow;
+      mesh.receiveShadow = receiveShadow;
 
       this.instances.forEach((inst, i) => {
         euler.set(inst.tilt, inst.rotY, 0);
@@ -90,8 +90,8 @@ export function treeField(leafMaterial = MAT.leaf) {
   });
 
   return new InstancedField([
-    { geometry: trunk, material: MAT.bark, vary: 0.16 },
-    { geometry: mergeGeometries(clusters), material: leafMaterial, vary: 0.34 }
+    { geometry: trunk, material: MAT.bark, vary: 0.16, castShadow: true },
+    { geometry: mergeGeometries(clusters), material: leafMaterial, vary: 0.34, castShadow: true }
   ]);
 }
 
@@ -113,8 +113,8 @@ export function pineField(leafMaterial = MAT.leafDeep) {
   });
 
   return new InstancedField([
-    { geometry: trunk, material: MAT.bark, vary: 0.14 },
-    { geometry: mergeGeometries(tiers), material: leafMaterial, vary: 0.3 }
+    { geometry: trunk, material: MAT.bark, vary: 0.14, castShadow: true },
+    { geometry: mergeGeometries(tiers), material: leafMaterial, vary: 0.3, castShadow: true }
   ]);
 }
 

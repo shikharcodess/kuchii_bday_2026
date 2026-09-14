@@ -63,7 +63,7 @@ function finish(canvas, { repeat = 1, colorSpace = THREE.SRGBColorSpace } = {}) 
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(repeat, repeat);
   texture.colorSpace = colorSpace;
-  texture.anisotropy = 8;
+  texture.anisotropy = 2;
   return texture;
 }
 

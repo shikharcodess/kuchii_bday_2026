@@ -15,25 +15,22 @@ export class Paths {
     this.scene = scene;
 
     // Waypoints: station centres plus gentle meander points so the route
-    // curves instead of running as straight lines between stops.
+    // curves comfortably through the scenic ~120m cozy world.
     this.waypoints = [
-      [0, 12],
-      [0, -18],
-      [-5, -38],
-      [-6, -58], // Sunflower Garden
-      [2, -80],
-      [18, -98],
-      [26, -116], // Dream Travel Globe
-      [22, -140],
-      [2, -158],
-      [-26, -176], // Nostalgia Corner
-      [-22, -200],
-      [-2, -218],
-      [14, -232], // Food Street
-      [10, -256],
-      [0, -286], // The Road That Led To Us
-      [0, -314],
-      [0, -344] // Finale
+      [0, 8],
+      [0, 0], // House Porch
+      [-2, -12],
+      [-4, -24], // Sunflower Garden & Koi Pond
+      [4, -36],
+      [12, -46], // Dream Travel Pavilion
+      [2, -58],
+      [-12, -68], // Nostalgia Corner
+      [-2, -78],
+      [9, -88], // Food Street
+      [4, -98],
+      [0, -106], // The Road That Led To Us
+      [0, -116],
+      [0, -126] // Finale Dance Gazebo
     ];
 
     this.curve = new THREE.CatmullRomCurve3(
@@ -52,11 +49,11 @@ export class Paths {
     const base = CONTENT.world.pathWidth;
     if (t < 0.72) return base;
     const narrow = Math.min(1, (t - 0.72) / 0.2);
-    return base * (1 - narrow * 0.42);
+    return base * (1 - narrow * 0.38);
   }
 
   build() {
-    const segments = 320;
+    const segments = 180;
     const positions = [];
     const normals = [];
     const uvs = [];

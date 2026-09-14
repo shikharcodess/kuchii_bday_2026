@@ -18,11 +18,11 @@ export function buildRoadToUs(ctx) {
   ctx.scene.add(group);
 
   const paths = ctx.paths;
-  const startT = paths.tNearest(x, z + 26);
-  const endT = paths.tNearest(x, z - 30);
+  const startT = paths.tNearest(x, z + 8);
+  const endT = paths.tNearest(x, z - 8);
 
   // --- Stream crossing the road, with a plank bridge over it ---
-  const streamZ = z - 6;
+  const streamZ = z - 2;
   const stream = new THREE.Mesh(
     new THREE.PlaneGeometry(120, 7, 40, 2),
     new THREE.MeshStandardMaterial({
@@ -167,6 +167,21 @@ export function buildRoadToUs(ctx) {
   bench.rotation.y = paths.headingAt(restT) - Math.PI / 2;
   group.add(bench);
   ctx.addCircle(restSpot.x, restSpot.z, 1.2);
+
+  // Register gentle milestone interaction
+  ctx.interactions.register({
+    id: 'road_to_us',
+    x: x,
+    z: z,
+    radius: 4.8,
+    label: 'Reflect along the gentle path',
+    onEnter: () => {
+      ctx.messagePanel?.show('Step by step, through patience and understanding, learning that home is not a place, but a person where you feel completely safe.');
+    },
+    onExit: () => {
+      ctx.messagePanel?.hide();
+    }
+  });
 
   return group;
 }
