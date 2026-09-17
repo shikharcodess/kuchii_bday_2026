@@ -30,3 +30,7 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# graphify local interpreter/root pointers (machine-specific)
+graphify-out/.graphify_python
+graphify-out/.graphify_root

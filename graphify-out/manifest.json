@@ -1,0 +1,218 @@
+{
+  "package.json": {
+    "mtime": 1789064833.6240673,
+    "seen": 1789665957.5345862,
+    "ast_hash": "05b54966a5a317d9b4f9f359ac43c8fa",
+    "semantic_hash": "05b54966a5a317d9b4f9f359ac43c8fa"
+  },
+  "src/config/content.js": {
+    "mtime": 1789198501.2787933,
+    "seen": 1789665957.53459,
+    "ast_hash": "c8360bad8376ee5b1f6e57d17cea6bb9",
+    "semantic_hash": "c8360bad8376ee5b1f6e57d17cea6bb9"
+  },
+  "src/core/Atmosphere.js": {
+    "mtime": 1789067661.651882,
+    "seen": 1789665957.534592,
+    "ast_hash": "f8a8541bac7b311be98c0a489ec421fe",
+    "semantic_hash": "f8a8541bac7b311be98c0a489ec421fe"
+  },
+  "src/core/CameraController.js": {
+    "mtime": 1789150890.8447592,
+    "seen": 1789665957.534593,
+    "ast_hash": "dfe6809984c4484e3360419b7a9cf446",
+    "semantic_hash": "dfe6809984c4484e3360419b7a9cf446"
+  },
+  "src/core/DevOptions.js": {
+    "mtime": 1789103600.0310273,
+    "seen": 1789665957.534594,
+    "ast_hash": "8356261035ef966f351f9690d6dac6af",
+    "semantic_hash": "8356261035ef966f351f9690d6dac6af"
+  },
+  "src/core/InputManager.js": {
+    "mtime": 1789150870.9248402,
+    "seen": 1789665957.534595,
+    "ast_hash": "b9bac9666fdd47a2a83ad309a4ef211b",
+    "semantic_hash": "b9bac9666fdd47a2a83ad309a4ef211b"
+  },
+  "src/core/InteractionSystem.js": {
+    "mtime": 1789068598.2140143,
+    "seen": 1789665957.5345972,
+    "ast_hash": "ac7e7350dff92efc8a5e14358a080a53",
+    "semantic_hash": "ac7e7350dff92efc8a5e14358a080a53"
+  },
+  "src/core/Lighting.js": {
+    "mtime": 1789196073.2601867,
+    "seen": 1789665957.5345979,
+    "ast_hash": "8f108bfe9e1a4bfef25bfee60376520c",
+    "semantic_hash": "8f108bfe9e1a4bfef25bfee60376520c"
+  },
+  "src/core/PostFX.js": {
+    "mtime": 1789150829.5834577,
+    "seen": 1789665957.5345988,
+    "ast_hash": "6ba856bb90228873b2599f7b97d1d312",
+    "semantic_hash": "6ba856bb90228873b2599f7b97d1d312"
+  },
+  "src/core/SceneManager.js": {
+    "mtime": 1789196137.1093755,
+    "seen": 1789665957.5346,
+    "ast_hash": "0637513b7b28d7d27a947f7b0e1bea63",
+    "semantic_hash": "0637513b7b28d7d27a947f7b0e1bea63"
+  },
+  "src/core/SurpriseSystem.js": {
+    "mtime": 1789151193.7613215,
+    "seen": 1789665957.534601,
+    "ast_hash": "f5fe01cd34b744eee606615dc9a084a0",
+    "semantic_hash": "f5fe01cd34b744eee606615dc9a084a0"
+  },
+  "src/entities/Character.js": {
+    "mtime": 1789150959.132624,
+    "seen": 1789665957.534602,
+    "ast_hash": "3da6a423de73c548aa6b24bca9474492",
+    "semantic_hash": "3da6a423de73c548aa6b24bca9474492"
+  },
+  "src/entities/Dog.js": {
+    "mtime": 1789150988.8789365,
+    "seen": 1789665957.534603,
+    "ast_hash": "e1418330a9ba86c189618b456501bd20",
+    "semantic_hash": "e1418330a9ba86c189618b456501bd20"
+  },
+  "src/entities/GuidanceArrow.js": {
+    "mtime": 1789151176.765874,
+    "seen": 1789665957.534604,
+    "ast_hash": "eed23da00d37f17308f140e281a084f5",
+    "semantic_hash": "eed23da00d37f17308f140e281a084f5"
+  },
+  "src/main.js": {
+    "mtime": 1789151559.6447856,
+    "seen": 1789665957.534605,
+    "ast_hash": "d20debe3c7344eb71a469391f9aa81e5",
+    "semantic_hash": "d20debe3c7344eb71a469391f9aa81e5"
+  },
+  "src/ui/HUD.js": {
+    "mtime": 1789151585.6797326,
+    "seen": 1789665957.534606,
+    "ast_hash": "e6f3711c0961d028434b8fb195874104",
+    "semantic_hash": "e6f3711c0961d028434b8fb195874104"
+  },
+  "src/ui/MessagePanel.js": {
+    "mtime": 1789151212.59279,
+    "seen": 1789665957.5346072,
+    "ast_hash": "b7df47d11dbe1a5acd28f660c45757a4",
+    "semantic_hash": "b7df47d11dbe1a5acd28f660c45757a4"
+  },
+  "src/utils/MathUtils.js": {
+    "mtime": 1789065257.8964427,
+    "seen": 1789665957.534608,
+    "ast_hash": "647c977daec00d722ec99cdb1200db49",
+    "semantic_hash": "647c977daec00d722ec99cdb1200db49"
+  },
+  "src/world/Ground.js": {
+    "mtime": 1789151070.4283533,
+    "seen": 1789665957.5346088,
+    "ast_hash": "bc20c075b24b46d38d622f4c95fc4cf1",
+    "semantic_hash": "bc20c075b24b46d38d622f4c95fc4cf1"
+  },
+  "src/world/Materials.js": {
+    "mtime": 1789068050.110246,
+    "seen": 1789665957.53461,
+    "ast_hash": "955b3129cfcf95a819be395b3dc1bd4d",
+    "semantic_hash": "955b3129cfcf95a819be395b3dc1bd4d"
+  },
+  "src/world/Paths.js": {
+    "mtime": 1789151048.3940082,
+    "seen": 1789665957.534611,
+    "ast_hash": "615d314cb46195d180f73c97f22cd9a0",
+    "semantic_hash": "615d314cb46195d180f73c97f22cd9a0"
+  },
+  "src/world/Pond.js": {
+    "mtime": 1789069443.2888122,
+    "seen": 1789665957.534612,
+    "ast_hash": "f6262b7613b81e79cfa54841fd884dc0",
+    "semantic_hash": "f6262b7613b81e79cfa54841fd884dc0"
+  },
+  "src/world/Props.js": {
+    "mtime": 1789196051.3454595,
+    "seen": 1789665957.534613,
+    "ast_hash": "f69c335467606ea090e435f30b16e873",
+    "semantic_hash": "f69c335467606ea090e435f30b16e873"
+  },
+  "src/world/Textures.js": {
+    "mtime": 1789196089.4958556,
+    "seen": 1789665957.534615,
+    "ast_hash": "71c8723001074402ba9bbf2d50dff540",
+    "semantic_hash": "71c8723001074402ba9bbf2d50dff540"
+  },
+  "src/world/World.js": {
+    "mtime": 1789151547.823758,
+    "seen": 1789665957.534616,
+    "ast_hash": "603dfda04077bdb06c7c328dc9dc9632",
+    "semantic_hash": "603dfda04077bdb06c7c328dc9dc9632"
+  },
+  "src/world/stations/Finale.js": {
+    "mtime": 1789151502.2352548,
+    "seen": 1789665957.5346172,
+    "ast_hash": "08b5f5b649218f83211662aa7e81220d",
+    "semantic_hash": "08b5f5b649218f83211662aa7e81220d"
+  },
+  "src/world/stations/FoodStreet.js": {
+    "mtime": 1789199969.0868552,
+    "seen": 1789665957.5346181,
+    "ast_hash": "c4c80b2754f23c792adf2ec2ef4c0259",
+    "semantic_hash": "c4c80b2754f23c792adf2ec2ef4c0259"
+  },
+  "src/world/stations/House.js": {
+    "mtime": 1789151026.7563002,
+    "seen": 1789665957.5346189,
+    "ast_hash": "93e8291da4c4e3053a0510f3ece6a0f6",
+    "semantic_hash": "93e8291da4c4e3053a0510f3ece6a0f6"
+  },
+  "src/world/stations/NostalgiaCorner.js": {
+    "mtime": 1789151402.431492,
+    "seen": 1789665957.5346198,
+    "ast_hash": "f83f0bbac566c87321e5e335ab0184f4",
+    "semantic_hash": "f83f0bbac566c87321e5e335ab0184f4"
+  },
+  "src/world/stations/RoadToUs.js": {
+    "mtime": 1789151482.5581312,
+    "seen": 1789665957.534621,
+    "ast_hash": "46b81b4d0fb58bde208bfe7689a36600",
+    "semantic_hash": "46b81b4d0fb58bde208bfe7689a36600"
+  },
+  "src/world/stations/SunflowerGarden.js": {
+    "mtime": 1789151313.9562964,
+    "seen": 1789665957.534622,
+    "ast_hash": "1626064b5de6644978f45c061187778c",
+    "semantic_hash": "1626064b5de6644978f45c061187778c"
+  },
+  "src/world/stations/TravelGlobe.js": {
+    "mtime": 1789151612.828618,
+    "seen": 1789665957.534623,
+    "ast_hash": "84ddb7431c6ac3723d82b7faca868322",
+    "semantic_hash": "84ddb7431c6ac3723d82b7faca868322"
+  },
+  "vite.config.js": {
+    "mtime": 1789064837.615897,
+    "seen": 1789665957.534624,
+    "ast_hash": "c9b8f12b558c43217b73a751025ed908",
+    "semantic_hash": "c9b8f12b558c43217b73a751025ed908"
+  },
+  "brd.md": {
+    "mtime": 1789065981.0918539,
+    "seen": 1789665957.534625,
+    "ast_hash": "d17ae0e4e41520e1ec50a59f1676a633",
+    "semantic_hash": "d17ae0e4e41520e1ec50a59f1676a633"
+  },
+  "index.html": {
+    "mtime": 1789151234.9677353,
+    "seen": 1789665957.534626,
+    "ast_hash": "edb8743e0cd3a03f94e356699bee5eac",
+    "semantic_hash": "edb8743e0cd3a03f94e356699bee5eac"
+  },
+  "public/models/README.txt": {
+    "mtime": 1789150922.4105194,
+    "seen": 1789665957.534627,
+    "ast_hash": "48f8d026fae08455ea762924902780c1",
+    "semantic_hash": "48f8d026fae08455ea762924902780c1"
+  }
+}
