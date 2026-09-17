@@ -181,23 +181,61 @@ export function buildHouse(ctx) {
   fireplace.position.set(-2.4, 0, -floorD / 2 + 0.45);
   group.add(fireplace);
 
-  const hearth = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.8, 0.7), MAT.stone);
-  hearth.position.y = 0.9;
-  hearth.castShadow = true;
-  fireplace.add(hearth);
+  // Stone surround built as two pillars + lintel so the firebox is a real cavity
+  [-0.75, 0.75].forEach((px) => {
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.8, 0.7), MAT.stone);
+    pillar.position.set(px, 0.9, 0);
+    pillar.castShadow = true;
+    fireplace.add(pillar);
+  });
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.8, 0.7), MAT.stone);
+  lintel.position.set(0, 1.4, 0);
+  lintel.castShadow = true;
+  fireplace.add(lintel);
+  const fireback = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.0, 0.1), MAT.darkWood);
+  fireback.position.set(0, 0.5, -0.3);
+  fireplace.add(fireback);
+  const hearthStone = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.6), MAT.stone);
+  hearthStone.position.set(0, 0.03, 0.45);
+  hearthStone.receiveShadow = true;
+  fireplace.add(hearthStone);
 
-  const fireOpening = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.0, 0.4), MAT.darkWood);
-  fireOpening.position.set(0, 0.6, 0.2);
-  fireplace.add(fireOpening);
+  // Logs
+  [[-0.18, 0.1, 0.3], [0.18, 0.1, -0.3], [0, 0.22, 0]].forEach(([lx, ly, rot]) => {
+    const log = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.6, 8), MAT.darkWood);
+    log.rotation.set(0, rot, Math.PI / 2);
+    log.position.set(lx, ly, 0.05);
+    fireplace.add(log);
+  });
 
   // Glowing fire embers
   const fireGlow = new THREE.PointLight(0xff7722, 9, 7, 2);
   fireGlow.position.set(0, 0.55, 0.25);
   fireplace.add(fireGlow);
 
-  const flame = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), MAT.lampGlow);
-  flame.position.set(0, 0.45, 0.25);
+  // Layered flame: orange outer tongue, yellow core, additive so it glows over the logs
+  const flame = new THREE.Group();
+  flame.position.set(0, 0.5, 0.05);
+  [[0.22, 0.55, 0xff5a1a, 0.55], [0.13, 0.4, 0xffb830, 0.8], [0.06, 0.25, 0xfff2b0, 0.95]].forEach(([r, h, color, opacity]) => {
+    const tongue = new THREE.Mesh(
+      new THREE.ConeGeometry(r, h, 8),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    tongue.position.y = h / 2 - 0.25;
+    flame.add(tongue);
+  });
   fireplace.add(flame);
+
+  // Mantel shelf with a pair of fuzzy socks hung to warm
+  const mantel = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 0.5), MAT.darkWood);
+  mantel.position.set(0, 1.84, 0.15);
+  mantel.castShadow = true;
+  fireplace.add(mantel);
+  [-0.35, 0.35].forEach((sx, i) => {
+    const sock = createFuzzySock(i === 0 ? 0xf1a7b5 : 0xb9d6f2);
+    sock.position.set(sx, 1.78, 0.42);
+    fireplace.add(sock);
+  });
 
   // Cozy Sofa
   const sofa = new THREE.Group();
@@ -237,7 +275,7 @@ export function buildHouse(ctx) {
         y: 0.2,
         yaw: group.rotation.y + Math.PI
       });
-      ctx.messagePanel?.show('A quiet, warm hearth built just for you. Snuggle up with the fuzzy socks and rest as long as you want.');
+      window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'house_fireplace' } }));
     },
     onExit: (character) => {
       character.standUp();
@@ -250,19 +288,39 @@ export function buildHouse(ctx) {
   galleryGroup.position.set(1.0, 1.6, -floorD / 2 + 0.14);
   group.add(galleryGroup);
 
-  const frameColors = [0xe07a5f, 0xf4a261, 0x81b29a, 0xf2cc8f];
-  for (let i = 0; i < 3; i++) {
+  // Gallery wall interaction — stand in front of the frames
+  const galleryWorld = ctx.localToWorld(group, 1.0, -floorD / 2 + 1.3);
+  ctx.interactions.register({
+    id: 'house_gallery',
+    x: galleryWorld.x,
+    z: galleryWorld.z,
+    radius: 1.6,
+    label: 'Look at the gallery wall',
+    onEnter: () => {
+      window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'house_gallery' } }));
+    },
+    onExit: () => {
+      ctx.messagePanel?.hide();
+    }
+  });
+
+  // The future-home dreams from the surprise text: a garden, a library, a server room.
+  ['garden', 'library', 'server'].forEach((scene, i) => {
     const frame = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.05), MAT.gold);
     frame.position.x = (i - 1) * 1.1;
     galleryGroup.add(frame);
 
-    const canvas = new THREE.Mesh(
+    const painting = new THREE.Mesh(
       new THREE.PlaneGeometry(0.78, 0.58),
-      tinted(MAT.fabricCream, frameColors[i])
+      new THREE.MeshStandardMaterial({ map: createPaintingTexture(scene), roughness: 0.85 })
     );
-    canvas.position.set((i - 1) * 1.1, 0, 0.03);
-    galleryGroup.add(canvas);
-  }
+    painting.position.set((i - 1) * 1.1, 0, 0.03);
+    galleryGroup.add(painting);
+  });
+
+  const pictureLight = new THREE.PointLight(0xffe3b8, 3, 3.5, 2);
+  pictureLight.position.set(0, 0.8, 0.6);
+  galleryGroup.add(pictureLight);
 
   // --- Kitchen & Dining Nook (Right Back) ---
   const kitchen = new THREE.Group();
@@ -324,7 +382,6 @@ export function buildHouse(ctx) {
     label: 'Open Shikhar\'s Secret Note',
     onEnter: () => {
       window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'house_letter' } }));
-      ctx.messagePanel?.show('💌 A Note for Kuchii: "From the moment you entered my life, everything became warmer and brighter. Happy Birthday to the strongest, kindest, most gorgeous soul!"');
     },
     onExit: () => {
       ctx.messagePanel?.hide();
@@ -391,4 +448,92 @@ export function buildHouse(ctx) {
   ctx.addCircle(cottagePos.x + 2.5, cottagePos.z - 1.5, 0.8); // kitchen counter
 
   return group;
+}
+
+function createFuzzySock(color) {
+  const sock = new THREE.Group();
+  const mat = tinted(MAT.fabricCream, color);
+  const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.16, 4, 8), mat);
+  leg.position.y = -0.1;
+  sock.add(leg);
+  const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.1, 4, 8), mat);
+  foot.rotation.z = Math.PI / 2;
+  foot.position.set(0.06, -0.22, 0);
+  sock.add(foot);
+  const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.025, 6, 12), MAT.fabricCream);
+  cuff.rotation.x = Math.PI / 2;
+  sock.add(cuff);
+  return sock;
+}
+
+// Little painted scenes for the gallery wall: garden, library, server room.
+function createPaintingTexture(scene) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 192;
+  const c = canvas.getContext('2d');
+
+  if (scene === 'garden') {
+    const sky = c.createLinearGradient(0, 0, 0, 120);
+    sky.addColorStop(0, '#8fc7f2');
+    sky.addColorStop(1, '#f6e3c5');
+    c.fillStyle = sky;
+    c.fillRect(0, 0, 256, 120);
+    c.fillStyle = '#ffd86b';
+    c.beginPath(); c.arc(200, 40, 22, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#5f9a4c';
+    c.fillRect(0, 120, 256, 72);
+    for (let i = 0; i < 14; i++) {
+      const x = 12 + i * 18, y = 135 + (i % 3) * 16;
+      c.strokeStyle = '#3f6f33'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(x, y + 22); c.lineTo(x, y); c.stroke();
+      c.fillStyle = ['#f4a261', '#e76f51', '#f2cc8f', '#e9a3ab'][i % 4];
+      c.beginPath(); c.arc(x, y, 6, 0, Math.PI * 2); c.fill();
+    }
+  } else if (scene === 'library') {
+    c.fillStyle = '#5a3b2a';
+    c.fillRect(0, 0, 256, 192);
+    for (let row = 0; row < 3; row++) {
+      const y = 20 + row * 56;
+      c.fillStyle = '#3d2718';
+      c.fillRect(8, y + 44, 240, 6);
+      for (let x = 12; x < 240; x += 0) {
+        const w = 10 + Math.floor(Math.random() * 10);
+        const h = 30 + Math.floor(Math.random() * 12);
+        c.fillStyle = ['#c0504d', '#4f81bd', '#9bbb59', '#f2cc8f', '#8064a2', '#e07a5f'][Math.floor(Math.random() * 6)];
+        c.fillRect(x, y + 44 - h, w - 2, h);
+        x += w;
+      }
+    }
+  } else {
+    c.fillStyle = '#141a24';
+    c.fillRect(0, 0, 256, 192);
+    for (let rack = 0; rack < 3; rack++) {
+      const x = 24 + rack * 76;
+      c.fillStyle = '#2b3442';
+      c.fillRect(x, 16, 60, 160);
+      for (let u = 0; u < 9; u++) {
+        const y = 24 + u * 17;
+        c.fillStyle = '#1c2330';
+        c.fillRect(x + 4, y, 52, 13);
+        c.fillStyle = (u + rack) % 3 === 0 ? '#ff9f43' : '#4cd964';
+        c.beginPath(); c.arc(x + 50, y + 6.5, 2.5, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#3fa7ff';
+        c.beginPath(); c.arc(x + 42, y + 6.5, 2, 0, Math.PI * 2); c.fill();
+      }
+    }
+    c.fillStyle = 'rgba(80,140,255,0.08)';
+    c.fillRect(0, 0, 256, 192);
+  }
+
+  // Painterly vignette so it reads as a canvas, not a screenshot
+  const v = c.createRadialGradient(128, 96, 60, 128, 96, 170);
+  v.addColorStop(0, 'rgba(0,0,0,0)');
+  v.addColorStop(1, 'rgba(40,20,0,0.35)');
+  c.fillStyle = v;
+  c.fillRect(0, 0, 256, 192);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
