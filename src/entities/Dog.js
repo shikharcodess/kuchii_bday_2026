@@ -22,6 +22,8 @@ export class Dog {
     this.speed = 0;
     this.trotPhase = 0;
     this.moveAmount = 0;
+    this.isDancing = false;
+    this.danceCenter = null;
 
     this._target = new THREE.Vector3();
     this._delta = new THREE.Vector3();
@@ -131,12 +133,26 @@ export class Dog {
     body.add(this.tail);
   }
 
+  setDancing(isDancing, centerPos = null) {
+    this.isDancing = isDancing;
+    this.danceCenter = centerPos;
+    if (!isDancing) {
+      this.body.rotation.x = 0;
+      this.position.y = 0;
+    }
+  }
+
   /**
    * @param {number} dt
    * @param {Character} leader the character to trail behind
    * @param {World} world
    */
   update(dt, leader, world) {
+    if (this.isDancing) {
+      this._updateDancing(dt);
+      return;
+    }
+
     // Aim for a point behind and to the side of her, in her local frame.
     const back = -this.followDistance;
     const side = this.sideOffset;
@@ -211,5 +227,39 @@ export class Dog {
     this.body.position.y = Math.abs(Math.cos(this.trotPhase)) * 0.035 * blend;
     this.head.rotation.z = Math.sin(now * 1.7) * 0.05 * (1 - blend);
     this.head.rotation.x = Math.sin(now * 1.1) * 0.04 * (1 - blend);
+  }
+
+  _updateDancing(dt) {
+    const now = performance.now() * 0.001;
+
+    // Circle joyfully nearby the couple
+    if (this.danceCenter) {
+      const radius = 2.4;
+      const angle = now * 1.2;
+      this.position.x = this.danceCenter.x + Math.sin(angle) * radius;
+      this.position.z = this.danceCenter.z + Math.cos(angle) * radius;
+      this.position.y = 0.28 + Math.abs(Math.sin(now * 8)) * 0.08;
+      // Face inward toward the dancing couple
+      const lookYaw = Math.atan2(this.danceCenter.x - this.position.x, this.danceCenter.z - this.position.z);
+      this.yaw = dampAngle(this.yaw, lookYaw, 8, dt);
+      this.group.rotation.y = this.yaw;
+    }
+
+    // Hind leg rearing & joyful paw dance!
+    this.body.rotation.x = -0.65 + Math.sin(now * 8) * 0.12;
+    // Front paws happily tapping the air in rhythm
+    this.legs[0].rotation.x = -0.8 + Math.sin(now * 12) * 0.55;
+    this.legs[1].rotation.x = -0.8 - Math.sin(now * 12) * 0.55;
+    // Hind legs supporting
+    this.legs[2].rotation.x = 0.35;
+    this.legs[3].rotation.x = 0.35;
+
+    // Tail wagging at maximum excitement!
+    this.tail.rotation.y = Math.sin(now * 24) * 0.85;
+    this.tail.rotation.x = 0.2;
+
+    // Head bopping happily to the beat
+    this.head.rotation.x = 0.22 + Math.sin(now * 8) * 0.12;
+    this.head.rotation.z = Math.sin(now * 6) * 0.1;
   }
 }

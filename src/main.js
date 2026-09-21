@@ -58,13 +58,16 @@ class App {
     this.character = new Character(this.sceneManager.scene);
     this.camera = new CameraController(this.sceneManager.camera, this.character);
 
+    this.dog = new Dog(this.sceneManager.scene);
+
     // Stations register their interactions as they build
     this.world = new World(this.sceneManager.scene, {
       interactions: this.interactions,
       camera: this.camera,
       messagePanel: this.messagePanel,
       surprises: this.surprises,
-      audio: this.audio
+      audio: this.audio,
+      dog: this.dog
     });
 
     this.character.position.copy(DevOptions.spawnPoint() ?? this.world.spawnPoint);
@@ -72,7 +75,6 @@ class App {
     DevOptions.scheduleInteract(this.input);
     DevOptions.scheduleJump(this.input);
 
-    this.dog = new Dog(this.sceneManager.scene);
     this.dog.position.set(
       this.character.position.x + 1.2,
       0,

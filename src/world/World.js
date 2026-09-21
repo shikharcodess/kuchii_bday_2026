@@ -104,6 +104,7 @@ export class World {
       messagePanel: this.services.messagePanel,
       surprises: this.services.surprises,
       audio: this.services.audio,
+      dog: this.services.dog,
       addCircle: (x, z, r) => this.addCircle(x, z, r),
       addHole: (hole) => this.holes.push(hole),
       addBox: (x, z, halfW, halfD, rotation = 0) => this.addBox(x, z, halfW, halfD, rotation),

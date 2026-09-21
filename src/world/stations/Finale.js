@@ -3,13 +3,41 @@ import { MAT, tinted } from '../Materials.js';
 import { createLantern, createStringLights, createBench } from '../Props.js';
 import { seededRandom } from '../../utils/MathUtils.js';
 
+function create3DHeartGeometry(size = 0.22) {
+  const shape = new THREE.Shape();
+  const x = 0, y = 0;
+  shape.moveTo(x, y + size * 0.35);
+  shape.bezierCurveTo(x, y + size * 0.75, x - size * 0.7, y + size * 0.75, x - size * 0.7, y + size * 0.35);
+  shape.bezierCurveTo(x - size * 0.7, y, x, y - size * 0.45, x, y - size * 0.65);
+  shape.bezierCurveTo(x, y - size * 0.45, x + size * 0.7, y, x + size * 0.7, y + size * 0.35);
+  shape.bezierCurveTo(x + size * 0.7, y + size * 0.75, x, y + size * 0.75, x, y + size * 0.35);
+
+  const extrudeSettings = {
+    depth: size * 0.26,
+    bevelEnabled: true,
+    bevelSegments: 4,
+    steps: 1,
+    bevelSize: size * 0.07,
+    bevelThickness: size * 0.07
+  };
+
+  const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  geo.center();
+  return geo;
+}
+
 /**
  * Station 7 — the Finale clearing.
  *
  * A round wooden dance floor under a flower arch, ringed with lanterns and
- * strung bulbs, sheltered by a half-circle of pines. Phase 4 places the two
- * avatars here and runs the hand-holding / slow dance; this phase builds the
- * stage and leaves the anchor points behind for it.
+ * strung bulbs, sheltered by a half-circle of pines.
+ * Features:
+ * - Partner avatar (Shikhar) with full articulated body, arms, and dance poses.
+ * - Coordinated hand-holding slow waltz with Kuchii.
+ * - Audio playback of public/audio/dance.mp3.
+ * - Dancing dog companion hopping and paw-tapping in joy.
+ * - 3D extruded floating hearts and falling rose petals.
+ * - Clean cinematic view without obstructive text headlines.
  */
 export function buildFinale(ctx) {
   const { x, z } = ctx.station.position;
@@ -162,8 +190,6 @@ export function buildFinale(ctx) {
   }
 
   // --- A sheltering half-circle of pines behind the floor ---
-  // The arc spans roughly +/-105 degrees so the approach from the road stays
-  // open: she should see the lit floor before she reaches it.
   for (let i = 0; i < 34; i++) {
     const angle = -1.85 + rand() * 3.7;
     const dist = 15 + rand() * 12;
@@ -182,58 +208,143 @@ export function buildFinale(ctx) {
     });
   }
 
+  // --- Pedestal table beside dance floor for holding bouquet during dance ---
+  const tableGroup = new THREE.Group();
+  tableGroup.position.set(3.2, 0.28, 2.5);
+  group.add(tableGroup);
+
+  const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.78, 12), MAT.darkWood);
+  tableLeg.position.y = 0.39;
+  tableGroup.add(tableLeg);
+
+  const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.06, 24), MAT.plank);
+  tableTop.position.y = 0.8;
+  tableGroup.add(tableTop);
+
   // --- Interactive Partner Character (Shikhar) ---
   const partnerGroup = new THREE.Group();
-  // Initially stands waiting gracefully by the archway with a rose bouquet
   partnerGroup.position.set(1.5, 0.28, floorRadius - 1.2);
   partnerGroup.rotation.y = Math.PI * 0.9;
   group.add(partnerGroup);
 
-  // Procedural Partner Model (Well-proportioned dark turtleneck & trousers)
+  // Procedural Partner Model (Well-tailored charcoal suit with articulated arms)
   const pSkinMat = tinted(MAT.fabricCream, 0xfce4d6);
-  const pTurtleneckMat = tinted(MAT.darkWood, 0x222226, { roughness: 0.82 });
-  const pTrouserMat = tinted(MAT.darkWood, 0x1a1a1e, { roughness: 0.85 });
+  const pJacketMat = tinted(MAT.darkWood, 0x1e222d, { roughness: 0.8 });
+  const pTrouserMat = tinted(MAT.darkWood, 0x161820, { roughness: 0.85 });
+  const pShoeMat = tinted(MAT.darkWood, 0x0d0e12, { roughness: 0.45 });
+  const pShirtMat = tinted(MAT.fabricCream, 0xf8f9fa);
+  const pTieMat = tinted(MAT.rose, 0xa31e3d);
+  const pEyeMat = tinted(MAT.darkWood, 0x221a14);
 
   // Legs & Shoes
-  const legGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.85, 8);
-  const shoeGeo = new THREE.BoxGeometry(0.12, 0.08, 0.22);
-  for (const sx of [-0.14, 0.14]) {
-    const leg = new THREE.Mesh(legGeo, pTrouserMat);
-    leg.position.set(sx, 0.45, 0);
-    leg.castShadow = true;
-    partnerGroup.add(leg);
+  const pLegs = [];
+  for (const side of [-0.14, 0.14]) {
+    const hip = new THREE.Group();
+    hip.position.set(side, 0.85, 0);
+    partnerGroup.add(hip);
 
-    const shoe = new THREE.Mesh(shoeGeo, pTrouserMat);
-    shoe.position.set(sx, 0.04, 0.05);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.065, 0.82, 10), pTrouserMat);
+    leg.position.y = -0.41;
+    leg.castShadow = true;
+    hip.add(leg);
+
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.09, 0.24), pShoeMat);
+    shoe.position.set(0, -0.81, 0.05);
     shoe.castShadow = true;
-    partnerGroup.add(shoe);
+    hip.add(shoe);
+
+    pLegs.push(hip);
   }
 
-  // Torso (Fitted dark turtleneck)
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.65, 0.28), pTurtleneckMat);
-  torso.position.y = 1.15;
-  torso.castShadow = true;
-  partnerGroup.add(torso);
+  // Torso
+  const pTorso = new THREE.Group();
+  pTorso.position.y = 0.9;
+  partnerGroup.add(pTorso);
 
-  // Turtleneck Collar
-  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.16, 12), pTurtleneckMat);
-  collar.position.y = 1.52;
-  partnerGroup.add(collar);
+  const jacket = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.58, 0.26), pJacketMat);
+  jacket.position.y = 0.29;
+  jacket.castShadow = true;
+  pTorso.add(jacket);
+
+  // Collar & Tie
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.12, 12), pShirtMat);
+  collar.position.y = 0.59;
+  pTorso.add(collar);
+
+  const tie = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.24, 0.02), pTieMat);
+  tie.position.set(0, 0.43, 0.135);
+  pTorso.add(tie);
 
   // Head & Stylish Hair
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), pSkinMat);
-  head.position.y = 1.72;
-  head.castShadow = true;
-  partnerGroup.add(head);
+  const pHead = new THREE.Group();
+  pHead.position.y = 0.75;
+  pTorso.add(pHead);
 
-  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), MAT.darkWood);
-  hair.scale.set(1.02, 0.95, 1.08);
-  hair.position.set(0, 1.78, -0.03);
-  partnerGroup.add(hair);
+  const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.145, 14, 12), pSkinMat);
+  headMesh.castShadow = true;
+  pHead.add(headMesh);
 
-  // Bouquet of fresh roses in partner's hand
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.158, 14, 12), tinted(MAT.darkWood, 0x141214));
+  hair.scale.set(1.05, 0.92, 1.1);
+  hair.position.set(0, 0.05, -0.02);
+  pHead.add(hair);
+
+  for (const es of [-0.05, 0.05]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), pEyeMat);
+    eye.position.set(es, 0.015, 0.138);
+    pHead.add(eye);
+  }
+
+  // Left Arm (clasping Kuchii's right hand in dance hold)
+  const pShoulderL = new THREE.Group();
+  pShoulderL.position.set(-0.24, 0.52, 0);
+  pTorso.add(pShoulderL);
+
+  const pUpperArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.048, 0.24, 10), pJacketMat);
+  pUpperArmL.position.y = -0.12;
+  pUpperArmL.castShadow = true;
+  pShoulderL.add(pUpperArmL);
+
+  const pElbowL = new THREE.Group();
+  pElbowL.position.y = -0.24;
+  pShoulderL.add(pElbowL);
+
+  const pForearmL = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.042, 0.22, 10), pJacketMat);
+  pForearmL.position.y = -0.11;
+  pForearmL.castShadow = true;
+  pElbowL.add(pForearmL);
+
+  const pHandL = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 8), pSkinMat);
+  pHandL.position.y = -0.22;
+  pHandL.castShadow = true;
+  pElbowL.add(pHandL);
+
+  // Right Arm (resting gently on Kuchii's waist in dance hold)
+  const pShoulderR = new THREE.Group();
+  pShoulderR.position.set(0.24, 0.52, 0);
+  pTorso.add(pShoulderR);
+
+  const pUpperArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.048, 0.24, 10), pJacketMat);
+  pUpperArmR.position.y = -0.12;
+  pUpperArmR.castShadow = true;
+  pShoulderR.add(pUpperArmR);
+
+  const pElbowR = new THREE.Group();
+  pElbowR.position.y = -0.24;
+  pShoulderR.add(pElbowR);
+
+  const pForearmR = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.042, 0.22, 10), pJacketMat);
+  pForearmR.position.y = -0.11;
+  pForearmR.castShadow = true;
+  pElbowR.add(pForearmR);
+
+  const pHandR = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 8), pSkinMat);
+  pHandR.position.y = -0.22;
+  pHandR.castShadow = true;
+  pElbowR.add(pHandR);
+
+  // Bouquet of fresh roses
   const bouquet = new THREE.Group();
-  bouquet.position.set(0.24, 1.15, 0.25);
   partnerGroup.add(bouquet);
 
   const wrap = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.35, 8), MAT.fabricPink);
@@ -254,45 +365,141 @@ export function buildFinale(ctx) {
     bouquet.add(r);
   }
 
-  // Floating celebration hearts over the dance floor
+  // Golden glowing link at clasped hands
+  const handClaspGlow = new THREE.Mesh(
+    new THREE.SphereGeometry(0.065, 12, 12),
+    tinted(MAT.gold, 0xffeb99, { transparent: true, opacity: 0.85 })
+  );
+  handClaspGlow.visible = false;
+  group.add(handClaspGlow);
+
+  // True 3D extruded celebration hearts
+  const heartGeo = create3DHeartGeometry(0.24);
+  const heartColors = [0xf72585, 0xff4d6d, 0xff758f, 0xffb703, 0xe0aaff];
   const heartFloaters = [];
-  for (let i = 0; i < 8; i++) {
-    const hMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), MAT.rose);
-    hMesh.position.set(
-      (rand() - 0.5) * 4.5,
-      1.8 + rand() * 2,
-      (rand() - 0.5) * 4.5
+  for (let i = 0; i < 9; i++) {
+    const hMesh = new THREE.Mesh(
+      heartGeo,
+      tinted(MAT.rose, heartColors[i % heartColors.length], { roughness: 0.35 })
     );
+    const ang = (i / 9) * Math.PI * 2 + rand() * 0.3;
+    const rad = 1.2 + rand() * 2.8;
+    hMesh.position.set(Math.sin(ang) * rad, 1.8 + rand() * 1.8, Math.cos(ang) * rad);
     group.add(hMesh);
-    heartFloaters.push(hMesh);
+    heartFloaters.push({
+      mesh: hMesh,
+      baseY: hMesh.position.y,
+      speed: 1.0 + rand() * 0.8,
+      phase: rand() * Math.PI * 2
+    });
+  }
+
+  // Floating falling rose petals around the dance floor
+  const fallingPetals = [];
+  const petalMat = tinted(MAT.rose, 0xff758f, { side: THREE.DoubleSide });
+  for (let i = 0; i < 24; i++) {
+    const p = new THREE.Mesh(new THREE.CircleGeometry(0.08, 5), petalMat);
+    p.position.set((rand() - 0.5) * 6, 1.8 + rand() * 3.5, (rand() - 0.5) * 6);
+    group.add(p);
+    fallingPetals.push({
+      mesh: p,
+      speed: 0.35 + rand() * 0.45,
+      rotSpeed: 1.2 + rand() * 2.0,
+      wobble: rand() * Math.PI * 2
+    });
   }
 
   // Dance State Machine
   let isDancing = false;
-  let danceTime = 0;
-  const targetDancePos = new THREE.Vector3(0, 0.28, 0);
+  let activeCharacter = null;
 
-  // Slow romantic dance and gentle idle sway
+  // Animation Loop
   ctx.registerAnimated((time, dt) => {
-    heartFloaters.forEach((h, i) => {
-      h.rotation.y = time * (1.2 + i * 0.15);
-      h.position.y = 2.0 + Math.sin(time * 2.2 + i * 1.1) * 0.35;
-      h.scale.setScalar(isDancing ? 1.4 + Math.sin(time * 3 + i) * 0.2 : 0.8);
+    // 3D hearts bobbing and rotating
+    heartFloaters.forEach((item, i) => {
+      item.mesh.rotation.y = time * 0.8 + item.phase;
+      item.mesh.rotation.z = Math.sin(time * 1.2 + item.phase) * 0.15;
+      item.mesh.position.y = item.baseY + Math.sin(time * item.speed + item.phase) * 0.35;
+      const s = isDancing ? 1.25 + Math.sin(time * 2.5 + i) * 0.15 : 0.85;
+      item.mesh.scale.setScalar(s);
+    });
+
+    // Falling petals drifting down softly
+    fallingPetals.forEach((p) => {
+      p.mesh.position.y -= p.speed * dt;
+      p.mesh.rotation.x += p.rotSpeed * dt;
+      p.mesh.rotation.y += p.rotSpeed * dt * 0.7;
+      p.mesh.position.x += Math.sin(time * 1.5 + p.wobble) * dt * 0.25;
+      if (p.mesh.position.y < 0.28) {
+        p.mesh.position.y = 4.6 + Math.random() * 1.0;
+        p.mesh.position.x = (Math.random() - 0.5) * 5.6;
+        p.mesh.position.z = (Math.random() - 0.5) * 5.6;
+      }
     });
 
     if (isDancing) {
-      danceTime += dt;
-      // Smoothly dance in center together
-      partnerGroup.position.x += (targetDancePos.x - partnerGroup.position.x) * dt * 3;
-      partnerGroup.position.z += (targetDancePos.z - partnerGroup.position.z) * dt * 3;
+      // Synchronized ballroom waltz revolution around the gazebo floor
+      const danceAngle = time * 0.42;
+      const radius = 0.38;
+      const ox = Math.sin(danceAngle) * radius;
+      const oz = Math.cos(danceAngle) * radius;
+      const waltzBob = Math.abs(Math.sin(time * 2.4)) * 0.04;
 
-      // Gentle synchronized waltz sway and spin
-      partnerGroup.rotation.y = time * 0.45;
-      partnerGroup.position.y = 0.28 + Math.abs(Math.sin(time * 2.4)) * 0.06;
-      bouquet.position.y = 1.15 + Math.sin(time * 3) * 0.05;
+      // Partner (Shikhar) at center + (ox, oz), facing center / Kuchii
+      partnerGroup.position.set(ox, 0.28 + waltzBob, oz);
+      partnerGroup.rotation.y = danceAngle + Math.PI;
+
+      // Subtle footwork rise-and-fall
+      const stepPhase = Math.sin(time * 2.4);
+      pLegs[0].rotation.x = stepPhase * 0.18;
+      pLegs[1].rotation.x = -stepPhase * 0.18;
+
+      // Partner arm pose in dance hold:
+      // Left arm raised clasping Kuchii's right hand
+      pShoulderL.rotation.x = -0.75;
+      pShoulderL.rotation.z = -0.35;
+      pElbowL.rotation.x = -0.6;
+
+      // Right arm wrapping gently around Kuchii's waist
+      pShoulderR.rotation.x = -0.55;
+      pShoulderR.rotation.z = 0.3;
+      pElbowR.rotation.x = -0.85;
+
+      // Bouquet resting on table while dancing
+      bouquet.position.set(3.2 - ox, 0.95, 2.5 - oz);
+      bouquet.rotation.set(0, time * 0.3, 0);
+
+      // Character (Kuchii) follows synchronized slow waltz position facing Shikhar
+      if (activeCharacter) {
+        activeCharacter.dancePos = new THREE.Vector3(x - ox, 0.28 + waltzBob, z - oz);
+        activeCharacter.danceYaw = danceAngle;
+      }
+
+      // Hand clasp glow positioned right between their raised hands
+      handClaspGlow.visible = true;
+      const handRelX = Math.cos(danceAngle) * 0.32;
+      const handRelZ = -Math.sin(danceAngle) * 0.32;
+      handClaspGlow.position.set(handRelX, 1.15 + waltzBob, handRelZ);
+      handClaspGlow.scale.setScalar(0.9 + Math.sin(time * 5) * 0.18);
     } else {
-      // Idle breathing and gentle look toward entrance
-      partnerGroup.position.y = 0.28 + Math.sin(time * 2.0) * 0.02;
+      // Idle waiting pose by entrance
+      partnerGroup.position.set(1.5, 0.28 + Math.sin(time * 2.0) * 0.02, floorRadius - 1.2);
+      partnerGroup.rotation.y = Math.PI * 0.9;
+      pLegs[0].rotation.x = 0;
+      pLegs[1].rotation.x = 0;
+
+      // Holding bouquet gently in front of chest
+      pShoulderR.rotation.x = -0.75;
+      pShoulderR.rotation.z = 0.22;
+      pElbowR.rotation.x = -0.7;
+
+      pShoulderL.rotation.x = -0.75;
+      pShoulderL.rotation.z = -0.22;
+      pElbowL.rotation.x = -0.7;
+
+      bouquet.position.set(0, 1.24, 0.26);
+      bouquet.rotation.set(-0.2, 0, 0);
+      handClaspGlow.visible = false;
     }
   });
 
@@ -302,40 +509,63 @@ export function buildFinale(ctx) {
     x: x,
     z: z + (floorRadius - 1.2),
     radius: 4.8,
-    label: 'Take Shikhar\'s hand & dance under the stars ✨',
-    activeLabel: 'Dancing with Kuchii &hearts;',
+    label: "Take Shikhar's hand & dance under the stars ✨",
+    activeLabel: null, // Completely removes "[E] Dancing with Kuchii &hearts;" headline!
     onEnter: (character) => {
       isDancing = true;
-      // Trigger romantic music!
+      activeCharacter = character;
+
+      // Play public/audio/dance.mp3
       if (ctx.audio) {
         ctx.audio.playDanceMusic();
       }
 
-      // Begin romantic camera orbit around the gazebo
+      // Dog starts happy celebration dance
+      if (ctx.dog) {
+        ctx.dog.setDancing(true, { x: x, z: z });
+      }
+
+      // Character initiates synchronized dance
+      if (character) {
+        character.startDancing({ x: x, y: 0.28, z: z + 0.38 }, 0);
+      }
+
+      // Romantic 360 camera orbit
       if (ctx.camera) {
         ctx.camera.beginOrbit({
           x: x,
           z: z,
-          radius: 8.5,
-          height: 3.8,
-          lookHeight: 1.4,
+          radius: 8.2,
+          height: 3.4,
+          lookHeight: 1.35,
           speed: 0.18
         });
       }
 
-      // Align character onto dance floor facing partner
-      if (character) {
-        character.position.set(x - 0.7, 0, z);
-        character.yaw = 0;
-      }
-
       window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'finale_dance' } }));
     },
-    onExit: () => {
+    onExit: (character) => {
       isDancing = false;
+      if (activeCharacter) {
+        activeCharacter.stopDancing();
+        activeCharacter = null;
+      } else if (character) {
+        character.stopDancing();
+      }
+
+      if (ctx.dog) {
+        ctx.dog.setDancing(false);
+      }
+
+      if (ctx.audio) {
+        ctx.audio.stopDanceMusic();
+      }
+
       if (ctx.camera) {
         ctx.camera.endOrbit();
       }
+
+      handClaspGlow.visible = false;
       ctx.messagePanel?.hide();
     }
   });

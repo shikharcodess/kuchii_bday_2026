@@ -68,16 +68,16 @@ export class AudioManager {
       audio.loop = loop;
       audio.volume = volume;
       audio.preload = 'auto';
+      this.tracks[id] = audio;
 
       audio.addEventListener('canplaythrough', () => {
-        this.tracks[id] = audio;
         if (id === 'bgm' && this.audioUnlocked && !this.isMuted) {
           audio.play().catch(() => {});
         }
       });
 
-      audio.addEventListener('error', () => {
-        // Custom audio file not yet provided, synth will handle it gracefully
+      audio.addEventListener('error', (e) => {
+        console.log(`Audio track ${id} not loaded from ${file}`);
       });
     });
   }
@@ -156,10 +156,19 @@ export class AudioManager {
   playDanceMusic() {
     if (this.isMuted) return;
 
+    if (!this.tracks.dance) {
+      const audio = new Audio('/audio/dance.mp3');
+      audio.loop = true;
+      audio.volume = 0.75;
+      this.tracks.dance = audio;
+    }
+
     if (this.tracks.dance) {
       if (this.tracks.bgm) this.tracks.bgm.pause();
       this.tracks.dance.currentTime = 0;
-      this.tracks.dance.play().catch(() => {});
+      this.tracks.dance.play().catch((err) => {
+        console.warn('Dance music play error:', err);
+      });
       return;
     }
 
@@ -180,6 +189,15 @@ export class AudioManager {
       osc.start(now);
       osc.stop(now + 2.6);
     });
+  }
+
+  stopDanceMusic() {
+    if (this.tracks.dance) {
+      this.tracks.dance.pause();
+    }
+    if (this.tracks.bgm && !this.isMuted && this.audioUnlocked) {
+      this.tracks.bgm.play().catch(() => {});
+    }
   }
 
   toggleMute() {

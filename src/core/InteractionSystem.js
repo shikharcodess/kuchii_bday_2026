@@ -35,7 +35,11 @@ export class InteractionSystem {
     const pressed = this.input.consumeInteract();
 
     if (this.active) {
-      this.hud.show(this.active.activeLabel ?? 'Stand up', 'E');
+      if (!this.active.activeLabel) {
+        this.hud.hide();
+      } else {
+        this.hud.show(this.active.activeLabel, 'E');
+      }
       if (pressed) this._deactivate(character);
       return;
     }

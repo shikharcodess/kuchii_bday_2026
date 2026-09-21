@@ -36,6 +36,12 @@ export class Character {
     this.seat = null;
     this.sitBlend = 0;
 
+    // Dancing state
+    this.isDancing = false;
+    this.danceBlend = 0;
+    this.dancePos = null;
+    this.danceYaw = 0;
+
     // Indoor state (triggers cozy indoor camera zoom)
     this.isIndoor = false;
 
@@ -389,6 +395,11 @@ export class Character {
       return;
     }
 
+    if (this.isDancing) {
+      this._updateDancing(dt);
+      return;
+    }
+
     this.sitBlend = damp(this.sitBlend, 0, 9, dt);
 
     // Camera-relative basis
@@ -513,6 +524,59 @@ export class Character {
     this.sitBlend = damp(this.sitBlend, 1, 6, dt);
     this.moveAmount = damp(this.moveAmount, 0, 10, dt);
     this._animate(dt);
+  }
+
+  startDancing(pos, yaw) {
+    this.isDancing = true;
+    this.dancePos = pos;
+    this.danceYaw = yaw;
+    this.speed = 0;
+    this.moveAmount = 0;
+    this.verticalVelocity = 0;
+    this.height = 0;
+    this.isGrounded = true;
+    if (this.seat) this.seat = null;
+  }
+
+  stopDancing() {
+    this.isDancing = false;
+    this.dancePos = null;
+    this.group.rotation.z = 0;
+  }
+
+  _updateDancing(dt) {
+    if (this.dancePos) {
+      this.position.x = damp(this.position.x, this.dancePos.x, 8, dt);
+      this.position.z = damp(this.position.z, this.dancePos.z, 8, dt);
+      this.position.y = damp(this.position.y, this.dancePos.y ?? 0.28, 8, dt);
+    }
+    if (this.danceYaw !== undefined) {
+      this.yaw = dampAngle(this.yaw, this.danceYaw, 8, dt);
+      this.group.rotation.y = this.yaw;
+    }
+
+    this.danceBlend = damp(this.danceBlend, 1, 6, dt);
+    this.moveAmount = damp(this.moveAmount, 0, 10, dt);
+
+    const now = performance.now() * 0.001;
+    const sway = Math.sin(now * 2.2) * 0.04;
+    this.group.rotation.z = sway;
+
+    // Both arms raised in ballroom waltz position:
+    // Left arm extends forward to rest gently on Shikhar's right shoulder/arm
+    this.shoulders[0].rotation.x = THREE.MathUtils.lerp(this.shoulders[0].rotation.x, -0.65, this.danceBlend);
+    this.shoulders[0].rotation.z = THREE.MathUtils.lerp(this.shoulders[0].rotation.z, -0.28, this.danceBlend);
+    this.elbows[0].rotation.x = THREE.MathUtils.lerp(this.elbows[0].rotation.x, -0.75, this.danceBlend);
+
+    // Right arm extends forward and slightly up, hand clasping Shikhar's hand
+    this.shoulders[1].rotation.x = THREE.MathUtils.lerp(this.shoulders[1].rotation.x, -0.75, this.danceBlend);
+    this.shoulders[1].rotation.z = THREE.MathUtils.lerp(this.shoulders[1].rotation.z, 0.35, this.danceBlend);
+    this.elbows[1].rotation.x = THREE.MathUtils.lerp(this.elbows[1].rotation.x, -0.6, this.danceBlend);
+
+    // Soft romantic waltz step rise and fall
+    this.pelvis.position.y = 0.95 + Math.abs(Math.sin(now * 2.2)) * 0.035;
+    this.head.rotation.x = 0.04;
+    this.head.rotation.y = Math.sin(now * 1.5) * 0.04;
   }
 
   _animate(dt) {
