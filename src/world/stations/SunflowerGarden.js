@@ -60,20 +60,59 @@ export function buildSunflowerGarden(ctx) {
     );
   }
 
+  // --- Roses, Lavender & Cosmos: rich floral diversity ---
+  if (ctx.fields.roses) {
+    for (let i = 0; i < 28; i++) {
+      const t = startT + (endT - startT) * rand();
+      const lateral = (rand() < 0.5 ? -1 : 1) * (2.8 + rand() * 4.5);
+      ctx.paths.offsetAt(t, lateral, spot);
+      if (clearOfFeatures(spot.x, spot.z)) {
+        ctx.fields.roses.add(spot.x, spot.z, { scale: 0.85 + rand() * 0.35, rotY: rand() * Math.PI * 2 });
+      }
+    }
+  }
+
+  if (ctx.fields.lavender) {
+    for (let i = 0; i < 35; i++) {
+      const t = startT + (endT - startT) * rand();
+      const lateral = (rand() < 0.5 ? -1 : 1) * (2.2 + rand() * 3.2);
+      ctx.paths.offsetAt(t, lateral, spot);
+      if (clearOfFeatures(spot.x, spot.z)) {
+        ctx.fields.lavender.add(spot.x, spot.z, { scale: 0.9 + rand() * 0.3, rotY: rand() * Math.PI * 2 });
+      }
+    }
+  }
+
+  if (ctx.fields.cosmos) {
+    for (let i = 0; i < 30; i++) {
+      const angle = rand() * Math.PI * 2;
+      const dist = 7.5 + rand() * 5.5;
+      const cx = pondCenter.x + Math.sin(angle) * dist;
+      const cz = pondCenter.z + Math.cos(angle) * dist;
+      if (Math.hypot(cx - pondCenter.x, cz - pondCenter.z) > 7.2) {
+        ctx.fields.cosmos.add(cx, cz, { scale: 0.85 + rand() * 0.4, rotY: rand() * Math.PI * 2 });
+      }
+    }
+  }
+
   // --- The pond ---
   const pond = new Pond({ x: pondCenter.x, z: pondCenter.z, radius: 6.5 });
   pond.addTo(ctx.scene);
   ctx.addHole(pond.hole);
   ctx.registerAnimated((time, dt) => pond.update(time, dt));
 
-  // Nobody should be able to walk into the water: ring the pond with colliders
-  const ringCount = 18;
+  // Protect player from falling into deep water, but keep the deck entrance wide open
+  const ringCount = 20;
   for (let i = 0; i < ringCount; i++) {
     const angle = (i / ringCount) * Math.PI * 2;
+    // Deck is located at deckAngle = Math.PI * 1.5 (west); keep entry gate clear
+    const diffToDeck = Math.atan2(Math.sin(angle - Math.PI * 1.5), Math.cos(angle - Math.PI * 1.5));
+    if (Math.abs(diffToDeck) < 0.55) continue;
+
     ctx.addCircle(
-      pondCenter.x + Math.sin(angle) * (pond.radius + 0.6),
-      pondCenter.z + Math.cos(angle) * (pond.radius + 0.6),
-      1.5
+      pondCenter.x + Math.sin(angle) * (pond.radius + 0.5),
+      pondCenter.z + Math.cos(angle) * (pond.radius + 0.5),
+      1.3
     );
   }
 
@@ -129,7 +168,16 @@ export function buildSunflowerGarden(ctx) {
     yaw: facing
   };
 
-  ctx.addCircle(seatWorld.x, seatWorld.z, 0.9);
+  // Railing / edge colliders protecting water boundaries while leaving deck and seat fully accessible
+  const leftEdge = ctx.localToWorld(deck, -2.6, 1.0);
+  const rightEdge = ctx.localToWorld(deck, 2.6, 1.0);
+  const waterFront = ctx.localToWorld(deck, 0, 2.8);
+  ctx.addCircle(leftEdge.x, leftEdge.z, 0.7);
+  ctx.addCircle(rightEdge.x, rightEdge.z, 0.7);
+  ctx.addCircle(waterFront.x, waterFront.z, 0.9);
+  // Behind the bench backrest so player cannot walk through back of bench
+  const benchBack = ctx.localToWorld(deck, 0, -1.1);
+  ctx.addCircle(benchBack.x, benchBack.z, 0.45);
 
   // A watering can and a pair of terracotta pots, so the deck looks lived-in
   const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.2, 0.36, 14), MAT.copper);
@@ -231,15 +279,17 @@ export function buildSunflowerGarden(ctx) {
   patioLight.position.set(0, 2.6, 0);
   patio.add(patioLight);
 
-  ctx.addCircle(patioCenter.x, patioCenter.z, 2.4);
+  // Collider only at the table rear so player can freely walk across the patio
+  const tableWorld = ctx.localToWorld(patio, 0, -1.8);
+  ctx.addCircle(tableWorld.x, tableWorld.z, 0.75);
 
   // Register interactive surprise at the vanity
   ctx.interactions.register({
     id: 'sunflower_sparkle',
     x: patioCenter.x,
     z: patioCenter.z,
-    radius: 3.2,
-    label: 'Admire vanity & sparkling payal',
+    radius: 3.5,
+    label: 'Explore Dressing & Jewelry Corner ✨',
     onEnter: () => {
       window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'sunflower_sparkle' } }));
     },

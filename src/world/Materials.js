@@ -76,6 +76,10 @@ export const MAT = {
   sunflowerCore: plain(0x53341c, 0.88, 0.02),
   stem: plain(0x4a7038, 0.9, 0.0),
   rose: plain(0xe07a8f, 0.72, 0.03),
+  rosePink: plain(0xf592aa, 0.65, 0.03),
+  rosePeach: plain(0xf7af94, 0.65, 0.03),
+  lavender: plain(0x9d77c4, 0.7, 0.04),
+  cosmosWhite: plain(0xfffaf0, 0.6, 0.02),
   chili: plain(0xc0392b, 0.5, 0.05),
   curry: plain(0xd2793a, 0.42, 0.05),
 

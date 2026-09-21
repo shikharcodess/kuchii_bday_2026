@@ -23,28 +23,28 @@ export class GuidanceArrow {
   }
 
   _build() {
-    // Glowing golden-pink material
+    // Glowing golden-pink material with soft elegance
     this.arrowMat = new THREE.MeshStandardMaterial({
       color: 0xf4a261,
       emissive: 0xf6c878,
-      emissiveIntensity: 0.8,
+      emissiveIntensity: 0.6,
       roughness: 0.25,
-      metalness: 0.3
+      metalness: 0.2
     });
 
-    // Arrow shaft: slender cylinder
-    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.5, 12), this.arrowMat);
+    // Dainty arrow shaft: very slender cylinder
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.28, 10), this.arrowMat);
     shaft.rotation.x = Math.PI / 2;
-    shaft.position.z = -0.15;
+    shaft.position.z = -0.08;
     this.group.add(shaft);
 
-    // Arrow pointer head: cone pointing along -Z
-    const head = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.32, 14), this.arrowMat);
+    // Dainty arrow pointer head: small cone pointing along -Z
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.16, 12), this.arrowMat);
     head.rotation.x = -Math.PI / 2;
-    head.position.z = -0.45;
+    head.position.z = -0.24;
     this.group.add(head);
 
-    // Cute floating heart atop the arrow
+    // Cute miniature floating heart atop the arrow
     const heartShape = new THREE.Shape();
     const x = 0, y = 0;
     heartShape.moveTo(x + 0.05, y + 0.05);
@@ -55,18 +55,18 @@ export class GuidanceArrow {
     heartShape.bezierCurveTo(x + 0.16, y + 0.07, x + 0.16, y, x + 0.1, y);
     heartShape.bezierCurveTo(x + 0.07, y, x + 0.05, y + 0.05, x + 0.05, y + 0.05);
 
-    const extrudeSettings = { depth: 0.04, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.01, bevelThickness: 0.01 };
+    const extrudeSettings = { depth: 0.02, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.006, bevelThickness: 0.006 };
     const heartGeo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
     heartGeo.center();
     const heart = new THREE.Mesh(heartGeo, this.arrowMat);
     heart.rotation.x = Math.PI;
     heart.rotation.z = Math.PI;
-    heart.scale.setScalar(1.2);
-    heart.position.set(0, 0.12, -0.05);
+    heart.scale.setScalar(0.55);
+    heart.position.set(0, 0.07, -0.02);
     this.group.add(heart);
 
-    // Subtle glow light
-    this.light = new THREE.PointLight(0xf6c878, 2.5, 4, 2);
+    // Subtle, gentle glow light (reduced from 2.5 to 0.75)
+    this.light = new THREE.PointLight(0xf6c878, 0.75, 2.5, 2);
     this.group.add(this.light);
   }
 
@@ -80,7 +80,7 @@ export class GuidanceArrow {
 
     // Hover slightly above the player
     const now = performance.now() * 0.001;
-    const hoverY = 2.45 + Math.sin(now * 3.2) * 0.12;
+    const hoverY = 2.65 + Math.sin(now * 2.6) * 0.08;
 
     this.group.position.set(
       characterPosition.x,

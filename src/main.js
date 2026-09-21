@@ -13,6 +13,8 @@ import { InteractionSystem } from './core/InteractionSystem.js';
 import { HUD } from './ui/HUD.js';
 import { MessagePanel } from './ui/MessagePanel.js';
 
+import { AudioManager } from './core/AudioManager.js';
+
 class App {
   constructor() {
     this.container = document.getElementById('canvas-container');
@@ -26,6 +28,18 @@ class App {
       this.sceneManager.atmosphere.sunDirection
     );
 
+    this.audio = new AudioManager();
+    const soundBtn = document.getElementById('sound-toggle-btn');
+    const soundIcon = document.getElementById('sound-icon');
+    const soundLabel = document.getElementById('sound-label');
+    if (soundBtn) {
+      soundBtn.addEventListener('click', () => {
+        const isMuted = this.audio.toggleMute();
+        if (soundIcon) soundIcon.textContent = isMuted ? '🔇' : '🔊';
+        if (soundLabel) soundLabel.textContent = isMuted ? 'Muted' : 'Music';
+      });
+    }
+
     this.input = new InputManager(this.sceneManager.renderer.domElement);
     this.hud = new HUD(this.input);
     this.interactions = new InteractionSystem(this.input, this.hud);
@@ -37,7 +51,8 @@ class App {
       this.sceneManager.camera,
       this.hud,
       this.messagePanel,
-      this.guidanceArrow
+      this.guidanceArrow,
+      this.audio
     );
 
     this.character = new Character(this.sceneManager.scene);
@@ -48,7 +63,8 @@ class App {
       interactions: this.interactions,
       camera: this.camera,
       messagePanel: this.messagePanel,
-      surprises: this.surprises
+      surprises: this.surprises,
+      audio: this.audio
     });
 
     this.character.position.copy(DevOptions.spawnPoint() ?? this.world.spawnPoint);
@@ -83,6 +99,7 @@ class App {
     this.guidanceArrow.update(dt, this.character.position);
     this.camera.update(dt, this.input);
     this.lighting.update(this.character.position);
+    this.audio.update(this.character.position);
     this.world.update(elapsed, dt);
 
     this.sceneManager.render(dt);

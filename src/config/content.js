@@ -59,8 +59,8 @@ export const CONTENT = {
     distance: 6.8,
     height: 4.0,
     lookHeight: 1.4,
-    indoorDistance: 5.0,
-    indoorHeight: 3.4,
+    indoorDistance: 4.4,
+    indoorHeight: 2.3,
     followEase: 9.5,
     yawEase: 5.5
   },
@@ -153,19 +153,59 @@ export const CONTENT = {
     },
     {
       id: 'sunflower_sparkle',
-      title: 'Golden Sparkles & Delicate Payal',
+      title: 'Dressing Corner: Sparkles, Star Nails & Delicate Payal',
       category: 'Her Favorite Details',
-      hint: 'Vanity table by the sunflower garden',
+      hint: 'Dressing corner by the sunflower garden',
       icon: '✨',
-      text: 'Golden and baby-pink glitter eyeshadow, transparent polish with tiny stars, and delicate anklets that chime with every happy step you take.'
+      text: 'Golden & baby-pink shimmer eyeshadow, transparent nail polish with tiny star details, and delicate silver payals that chime with every happy step you take.'
+    },
+    {
+      id: 'travel_paris',
+      title: 'Paris: Evenings by the Seine & Eiffel Tower',
+      category: 'Dream Travel',
+      hint: 'Paris diorama at Dream Travel Pavilion',
+      icon: '🥐',
+      text: 'Strolling hand-in-hand along the Seine, sipping coffee at little Parisian cafes, and watching the Eiffel Tower sparkle into the night sky with you.'
+    },
+    {
+      id: 'travel_japan',
+      title: 'Japan: Blooming Sakura & Torii Shrines',
+      category: 'Dream Travel',
+      hint: 'Japan diorama at Dream Travel Pavilion',
+      icon: '🌸',
+      text: 'Wandering under falling pink cherry blossoms in Kyoto, walking through vibrant vermilion Torii gates, and discovering cozy late-night ramen spots together.'
+    },
+    {
+      id: 'travel_switzerland',
+      title: 'Swiss Alps: Snowcapped Peaks & Mountain Chalets',
+      category: 'Dream Travel',
+      hint: 'Switzerland diorama at Dream Travel Pavilion',
+      icon: '🏔️',
+      text: 'Scenic train rides through snow-covered alpine valleys, cozy wooden chalets with a roaring fireplace, and mugs of rich hot chocolate after a day in the snow.'
+    },
+    {
+      id: 'travel_south_india',
+      title: 'South Indian Temples: Sacred Gopurams & Golden Chimes',
+      category: 'Dream Travel',
+      hint: 'South India diorama at Dream Travel Pavilion',
+      icon: '🛕',
+      text: 'Marveling at ancient towering temple gopurams, hearing the peaceful echoes of temple bells, and taking slow, sacred walks immersed in history and calm.'
+    },
+    {
+      id: 'travel_amazon',
+      title: 'Amazon Rainforest: Wild Canopies & Tropical Rivers',
+      category: 'Dream Travel',
+      hint: 'Amazon diorama at Dream Travel Pavilion',
+      icon: '🦜',
+      text: 'Canopy walkways above lush emerald rainforests, spotting colorful toucans and wildlife, and feeling the untamed spirit of adventure by the river.'
     },
     {
       id: 'travel_balloon',
-      title: 'Hot Air Balloons in Cappadocia',
+      title: 'Our World Passport: The Adventures Ahead',
       category: 'Dream Travel',
-      hint: 'At the Dream Travel Pavilion',
-      icon: '🎈',
-      text: 'Watching the sunrise together over Turkey, wandering through Bruges, and walking around ancient South Indian temples.'
+      hint: 'Central rotating globe at Dream Travel Pavilion',
+      icon: '✈️',
+      text: 'Every destination, every city, every sunrise on this globe — all of them are waiting for us. One ticket, one flight, forever together.'
     },
     {
       id: 'nostalgia_record',

@@ -30,6 +30,7 @@ export class Character {
     this.height = 0;
     this.isGrounded = true;
     this.landingSquash = 0;
+    this.airVelocity = new THREE.Vector2(0, 0);
 
     // Seated state
     this.seat = null;
@@ -406,7 +407,7 @@ export class Character {
 
     if (moving) {
       this._direction.normalize();
-      this.speed = targetSpeed * (this.isGrounded ? 1 : 0.85);
+      this.speed = targetSpeed * (this.isGrounded ? 1 : 0.9);
 
       const targetYaw = Math.atan2(this._direction.x, this._direction.z);
       this.yaw = dampAngle(this.yaw, targetYaw, CONTENT.world.turnSpeed, dt);
@@ -414,7 +415,19 @@ export class Character {
       this.position.x += this._direction.x * this.speed * dt;
       this.position.z += this._direction.z * this.speed * dt;
 
-      if (world) world.constrain(this.position, this.radius);
+      this.airVelocity.set(this._direction.x * this.speed, this._direction.z * this.speed);
+
+      const effRadius = this.height > 0.2 ? this.radius * 0.78 : this.radius;
+      if (world) world.constrain(this.position, effRadius);
+    } else if (!this.isGrounded && this.airVelocity.lengthSq() > 0.01) {
+      // Carry forward momentum in air smoothly
+      this.position.x += this.airVelocity.x * dt;
+      this.position.z += this.airVelocity.y * dt;
+      this.airVelocity.multiplyScalar(Math.pow(0.3, dt * 4));
+
+      const effRadius = this.height > 0.2 ? this.radius * 0.78 : this.radius;
+      if (world) world.constrain(this.position, effRadius);
+      this.speed = this.airVelocity.length();
     } else {
       this.speed = 0;
     }
@@ -444,6 +457,11 @@ export class Character {
     if (input.consumeJump() && this.isGrounded) {
       this.verticalVelocity = jump.velocity;
       this.isGrounded = false;
+      if (this.speed > 0.1 && this._direction.lengthSq() > 0.01) {
+        this.airVelocity.set(this._direction.x * this.speed, this._direction.z * this.speed);
+      } else {
+        this.airVelocity.set(0, 0);
+      }
     }
 
     if (!this.isGrounded) {
@@ -455,6 +473,7 @@ export class Character {
         this.height = 0;
         this.verticalVelocity = 0;
         this.isGrounded = true;
+        this.airVelocity.set(0, 0);
       }
     }
 

@@ -182,87 +182,160 @@ export function buildFinale(ctx) {
     });
   }
 
-  // --- Dancing Couple (Hand-Holding & Slow Spin) ---
-  const coupleGroup = new THREE.Group();
-  coupleGroup.position.set(0, 0.28, 0);
-  group.add(coupleGroup);
+  // --- Interactive Partner Character (Shikhar) ---
+  const partnerGroup = new THREE.Group();
+  // Initially stands waiting gracefully by the archway with a rose bouquet
+  partnerGroup.position.set(1.5, 0.28, floorRadius - 1.2);
+  partnerGroup.rotation.y = Math.PI * 0.9;
+  group.add(partnerGroup);
 
-  // Female avatar
-  const fAvatar = new THREE.Group();
-  fAvatar.position.set(-0.55, 0, 0);
-  coupleGroup.add(fAvatar);
+  // Procedural Partner Model (Well-proportioned dark turtleneck & trousers)
+  const pSkinMat = tinted(MAT.fabricCream, 0xfce4d6);
+  const pTurtleneckMat = tinted(MAT.darkWood, 0x222226, { roughness: 0.82 });
+  const pTrouserMat = tinted(MAT.darkWood, 0x1a1a1e, { roughness: 0.85 });
 
-  const fBody = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.42, 0.85, 14), MAT.fabricPink);
-  fBody.position.y = 0.55;
-  fAvatar.add(fBody);
+  // Legs & Shoes
+  const legGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.85, 8);
+  const shoeGeo = new THREE.BoxGeometry(0.12, 0.08, 0.22);
+  for (const sx of [-0.14, 0.14]) {
+    const leg = new THREE.Mesh(legGeo, pTrouserMat);
+    leg.position.set(sx, 0.45, 0);
+    leg.castShadow = true;
+    partnerGroup.add(leg);
 
-  const fHead = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), MAT.fabricCream);
-  fHead.position.y = 1.15;
-  fAvatar.add(fHead);
+    const shoe = new THREE.Mesh(shoeGeo, pTrouserMat);
+    shoe.position.set(sx, 0.04, 0.05);
+    shoe.castShadow = true;
+    partnerGroup.add(shoe);
+  }
 
-  const fHair = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), MAT.darkWood);
-  fHair.position.set(0, 1.2, -0.04);
-  fAvatar.add(fHair);
+  // Torso (Fitted dark turtleneck)
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.65, 0.28), pTurtleneckMat);
+  torso.position.y = 1.15;
+  torso.castShadow = true;
+  partnerGroup.add(torso);
 
-  // Male avatar (dark turtleneck & trousers)
-  const mAvatar = new THREE.Group();
-  mAvatar.position.set(0.55, 0, 0);
-  coupleGroup.add(mAvatar);
+  // Turtleneck Collar
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.16, 12), pTurtleneckMat);
+  collar.position.y = 1.52;
+  partnerGroup.add(collar);
 
-  const mBody = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.95, 14), MAT.darkWood);
-  mBody.position.y = 0.6;
-  mAvatar.add(mBody);
+  // Head & Stylish Hair
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), pSkinMat);
+  head.position.y = 1.72;
+  head.castShadow = true;
+  partnerGroup.add(head);
 
-  const mHead = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), MAT.fabricCream);
-  mHead.position.y = 1.25;
-  mAvatar.add(mHead);
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), MAT.darkWood);
+  hair.scale.set(1.02, 0.95, 1.08);
+  hair.position.set(0, 1.78, -0.03);
+  partnerGroup.add(hair);
 
-  const mHair = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), MAT.darkWood);
-  mHair.position.set(0, 1.32, -0.03);
-  mAvatar.add(mHair);
+  // Bouquet of fresh roses in partner's hand
+  const bouquet = new THREE.Group();
+  bouquet.position.set(0.24, 1.15, 0.25);
+  partnerGroup.add(bouquet);
 
-  // Linked hands in center
-  const hands = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), MAT.fabricCream);
-  hands.position.set(0, 0.68, 0.1);
-  coupleGroup.add(hands);
+  const wrap = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.35, 8), MAT.fabricPink);
+  wrap.rotation.x = Math.PI;
+  bouquet.add(wrap);
+
+  const roseColors = [0xe63946, 0xff758f, 0xffb703, 0xf72585];
+  for (let i = 0; i < 7; i++) {
+    const r = new THREE.Mesh(
+      new THREE.SphereGeometry(0.06, 6, 6),
+      tinted(MAT.rose, roseColors[i % roseColors.length])
+    );
+    r.position.set(
+      (Math.random() - 0.5) * 0.18,
+      0.18 + Math.random() * 0.08,
+      (Math.random() - 0.5) * 0.18
+    );
+    bouquet.add(r);
+  }
 
   // Floating celebration hearts over the dance floor
   const heartFloaters = [];
-  for (let i = 0; i < 6; i++) {
-    const hMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), MAT.rose);
+  for (let i = 0; i < 8; i++) {
+    const hMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), MAT.rose);
     hMesh.position.set(
-      (rand() - 0.5) * 3,
-      1.6 + rand() * 1.5,
-      (rand() - 0.5) * 3
+      (rand() - 0.5) * 4.5,
+      1.8 + rand() * 2,
+      (rand() - 0.5) * 4.5
     );
     group.add(hMesh);
     heartFloaters.push(hMesh);
   }
 
-  // Slow, romantic dance spin
-  ctx.registerAnimated((time, dt) => {
-    coupleGroup.rotation.y = time * 0.35;
-    const bob = Math.sin(time * 2.2) * 0.04;
-    fAvatar.position.y = bob;
-    mAvatar.position.y = -bob;
+  // Dance State Machine
+  let isDancing = false;
+  let danceTime = 0;
+  const targetDancePos = new THREE.Vector3(0, 0.28, 0);
 
+  // Slow romantic dance and gentle idle sway
+  ctx.registerAnimated((time, dt) => {
     heartFloaters.forEach((h, i) => {
-      h.rotation.y = time * (1.5 + i * 0.2);
-      h.position.y = 1.8 + Math.sin(time * 2 + i) * 0.25;
+      h.rotation.y = time * (1.2 + i * 0.15);
+      h.position.y = 2.0 + Math.sin(time * 2.2 + i * 1.1) * 0.35;
+      h.scale.setScalar(isDancing ? 1.4 + Math.sin(time * 3 + i) * 0.2 : 0.8);
     });
+
+    if (isDancing) {
+      danceTime += dt;
+      // Smoothly dance in center together
+      partnerGroup.position.x += (targetDancePos.x - partnerGroup.position.x) * dt * 3;
+      partnerGroup.position.z += (targetDancePos.z - partnerGroup.position.z) * dt * 3;
+
+      // Gentle synchronized waltz sway and spin
+      partnerGroup.rotation.y = time * 0.45;
+      partnerGroup.position.y = 0.28 + Math.abs(Math.sin(time * 2.4)) * 0.06;
+      bouquet.position.y = 1.15 + Math.sin(time * 3) * 0.05;
+    } else {
+      // Idle breathing and gentle look toward entrance
+      partnerGroup.position.y = 0.28 + Math.sin(time * 2.0) * 0.02;
+    }
   });
 
   // --- Grand Finale Interaction ---
   ctx.interactions.register({
     id: 'finale_dance',
     x: x,
-    z: z,
-    radius: 7.5,
-    label: 'Dance under the lanterns & celebrate Kuchii!',
-    onEnter: () => {
+    z: z + (floorRadius - 1.2),
+    radius: 4.8,
+    label: 'Take Shikhar\'s hand & dance under the stars ✨',
+    activeLabel: 'Dancing with Kuchii &hearts;',
+    onEnter: (character) => {
+      isDancing = true;
+      // Trigger romantic music!
+      if (ctx.audio) {
+        ctx.audio.playDanceMusic();
+      }
+
+      // Begin romantic camera orbit around the gazebo
+      if (ctx.camera) {
+        ctx.camera.beginOrbit({
+          x: x,
+          z: z,
+          radius: 8.5,
+          height: 3.8,
+          lookHeight: 1.4,
+          speed: 0.18
+        });
+      }
+
+      // Align character onto dance floor facing partner
+      if (character) {
+        character.position.set(x - 0.7, 0, z);
+        character.yaw = 0;
+      }
+
       window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'finale_dance' } }));
     },
     onExit: () => {
+      isDancing = false;
+      if (ctx.camera) {
+        ctx.camera.endOrbit();
+      }
       ctx.messagePanel?.hide();
     }
   });

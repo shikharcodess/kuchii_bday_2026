@@ -219,6 +219,101 @@ export function sunflowerField() {
   ]);
 }
 
+/**
+ * Blooming English Rose cluster: lush leaves, delicate layered rose blossoms.
+ */
+export function roseField() {
+  const foliage = [];
+  for (let i = 0; i < 4; i++) {
+    const leaf = new THREE.SphereGeometry(0.18, 6, 5);
+    leaf.scale(1.2, 0.4, 0.9);
+    leaf.translate(Math.sin(i * 1.6) * 0.18, 0.22 + i * 0.08, Math.cos(i * 1.6) * 0.18);
+    foliage.push(leaf);
+  }
+
+  const blooms = [];
+  const bloomOffsets = [
+    [-0.15, 0.42, 0.08, 0.13],
+    [0.16, 0.48, -0.06, 0.15],
+    [0.0, 0.58, 0.02, 0.17]
+  ];
+  for (const [bx, by, bz, br] of bloomOffsets) {
+    const bloom = new THREE.DodecahedronGeometry(br, 1);
+    bloom.scale(1.1, 0.85, 1.1);
+    bloom.translate(bx, by, bz);
+    blooms.push(bloom);
+  }
+
+  return new InstancedField([
+    { geometry: mergeGeometries(foliage), material: MAT.leafWarm, vary: 0.18 },
+    { geometry: mergeGeometries(blooms), material: MAT.rosePink, vary: 0.15 }
+  ]);
+}
+
+/**
+ * Fragrant Lavender Stalks: slender stems with violet/purple flower spikes.
+ */
+export function lavenderField() {
+  const stems = [];
+  const spikes = [];
+  for (let i = 0; i < 5; i++) {
+    const ang = (i / 5) * Math.PI * 2;
+    const rad = 0.08 + (i % 2) * 0.05;
+    const sx = Math.sin(ang) * rad;
+    const sz = Math.cos(ang) * rad;
+    const h = 0.65 + (i % 3) * 0.12;
+
+    const stem = new THREE.CylinderGeometry(0.012, 0.016, h, 5);
+    stem.translate(sx, h / 2, sz);
+    stems.push(stem);
+
+    const spike = new THREE.CapsuleGeometry(0.032, 0.24, 4, 6);
+    spike.translate(sx, h + 0.1, sz);
+    spikes.push(spike);
+  }
+
+  return new InstancedField([
+    { geometry: mergeGeometries(stems), material: MAT.stem, vary: 0.18 },
+    { geometry: mergeGeometries(spikes), material: MAT.lavender, vary: 0.14 }
+  ]);
+}
+
+/**
+ * Delicate White Daisies & Cosmos: slender wild stems with white petals and gold centers.
+ */
+export function cosmosField() {
+  const stems = [];
+  const petals = [];
+  const centers = [];
+
+  for (let i = 0; i < 3; i++) {
+    const ang = (i / 3) * Math.PI * 2;
+    const sx = Math.sin(ang) * 0.14;
+    const sz = Math.cos(ang) * 0.14;
+    const h = 0.5 + (i % 2) * 0.14;
+
+    const stem = new THREE.CylinderGeometry(0.01, 0.014, h, 4);
+    stem.translate(sx, h / 2, sz);
+    stems.push(stem);
+
+    const petalDisc = new THREE.CircleGeometry(0.14, 8);
+    petalDisc.rotateX(-Math.PI / 2);
+    petalDisc.translate(sx, h, sz);
+    petals.push(petalDisc);
+
+    const center = new THREE.SphereGeometry(0.04, 6, 5);
+    center.scale(1, 0.4, 1);
+    center.translate(sx, h + 0.01, sz);
+    centers.push(center);
+  }
+
+  return new InstancedField([
+    { geometry: mergeGeometries(stems), material: MAT.stem, vary: 0.2 },
+    { geometry: mergeGeometries(petals), material: MAT.cosmosWhite, vary: 0.12 },
+    { geometry: mergeGeometries(centers), material: MAT.sunflowerPetal, vary: 0.1 }
+  ]);
+}
+
 /** Warm path lantern on a slim post — the map's main night-time light motif. */
 export function createLantern({ height = 2.6, glass = MAT.lampGlow } = {}) {
   const group = new THREE.Group();

@@ -28,13 +28,22 @@ export function buildHouse(ctx) {
   // --- Foundation & Interior Floor ---
   const floorW = 8.6;
   const floorD = 7.4;
-  const floorH = 0.15;
+  const floorH = 0.24;
+
+  // Solid stone foundation plinth to completely prevent ground clipping
+  const foundation = new THREE.Mesh(
+    new THREE.BoxGeometry(floorW + 0.2, 0.26, floorD + 0.2),
+    MAT.stone
+  );
+  foundation.position.set(0, 0.13, 0);
+  foundation.receiveShadow = true;
+  group.add(foundation);
 
   const floor = new THREE.Mesh(
-    new THREE.BoxGeometry(floorW, floorH, floorD),
+    new THREE.BoxGeometry(floorW, 0.08, floorD),
     MAT.plank
   );
-  floor.position.set(0, floorH / 2, 0);
+  floor.position.set(0, floorH, 0);
   floor.receiveShadow = true;
   group.add(floor);
 
@@ -43,25 +52,33 @@ export function buildHouse(ctx) {
   const porchD = 3.2;
   const porchZ = floorD / 2 + porchD / 2;
 
+  const porchFoundation = new THREE.Mesh(
+    new THREE.BoxGeometry(porchW + 0.2, 0.26, porchD + 0.2),
+    MAT.stone
+  );
+  porchFoundation.position.set(0, 0.13, porchZ);
+  porchFoundation.receiveShadow = true;
+  group.add(porchFoundation);
+
   const porch = new THREE.Mesh(
-    new THREE.BoxGeometry(porchW, floorH, porchD),
+    new THREE.BoxGeometry(porchW, 0.08, porchD),
     MAT.plank
   );
-  porch.position.set(0, floorH / 2, porchZ);
+  porch.position.set(0, floorH, porchZ);
   porch.receiveShadow = true;
   group.add(porch);
 
   // Porch steps
   for (let i = 0; i < 2; i++) {
-    const step = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 0.45), MAT.sandstone);
-    step.position.set(0, (1 - i) * 0.07 + 0.04, porchZ + porchD / 2 + (i + 0.5) * 0.45);
+    const step = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.09, 0.45), MAT.sandstone);
+    step.position.set(0, (1 - i) * 0.08 + 0.045, porchZ + porchD / 2 + (i + 0.5) * 0.45);
     step.receiveShadow = true;
     group.add(step);
   }
 
   // Welcome doormat
   const doormat = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.04, 0.8), MAT.fabricPink);
-  doormat.position.set(0, floorH + 0.02, porchZ + 0.3);
+  doormat.position.set(0, floorH + 0.04, porchZ + 0.3);
   doormat.receiveShadow = true;
   group.add(doormat);
 
@@ -387,6 +404,54 @@ export function buildHouse(ctx) {
       ctx.messagePanel?.hide();
     }
   });
+
+  // --- Cozy Interior Ceiling with Exposed Timber Beams ---
+  const interiorCeiling = new THREE.Group();
+  group.add(interiorCeiling);
+
+  // Ceiling underside panels: warm wood/cream finish visible from inside
+  const ceilingPlanks = new THREE.Mesh(
+    new THREE.BoxGeometry(floorW - 0.1, 0.06, floorD - 0.1),
+    MAT.paleWall
+  );
+  ceilingPlanks.position.set(0, wallH + 0.02, 0);
+  ceilingPlanks.receiveShadow = true;
+  interiorCeiling.add(ceilingPlanks);
+
+  // 6 Exposed rustic dark-wood rafters across the width of the room
+  const beamCount = 6;
+  for (let i = 0; i < beamCount; i++) {
+    const bz = -floorD / 2 + 0.65 + i * ((floorD - 1.3) / (beamCount - 1));
+    const beam = new THREE.Mesh(
+      new THREE.BoxGeometry(floorW - 0.2, 0.18, 0.18),
+      MAT.darkWood
+    );
+    beam.position.set(0, wallH - 0.08, bz);
+    beam.castShadow = true;
+    interiorCeiling.add(beam);
+  }
+
+  // Central longitudinal spine beam
+  const spineBeam = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 0.22, floorD - 0.2),
+    MAT.darkWood
+  );
+  spineBeam.position.set(0, wallH - 0.06, 0);
+  spineBeam.castShadow = true;
+  interiorCeiling.add(spineBeam);
+
+  // Warm hanging brass chandelier from the center beam
+  const chandelierCord = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.4, 6), MAT.metal);
+  chandelierCord.position.set(0, wallH - 0.26, 0);
+  interiorCeiling.add(chandelierCord);
+
+  const chandelierLantern = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2, 0), MAT.lampGlow);
+  chandelierLantern.position.set(0, wallH - 0.48, 0);
+  interiorCeiling.add(chandelierLantern);
+
+  const chandelierLight = new THREE.PointLight(0xffe0a8, 6, 10, 2);
+  chandelierLight.position.set(0, wallH - 0.48, 0);
+  interiorCeiling.add(chandelierLight);
 
   // --- Cutaway Roof & Chimney Group ---
   const roofGroup = new THREE.Group();

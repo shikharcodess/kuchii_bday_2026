@@ -90,16 +90,25 @@ export function buildTravelGlobe(ctx) {
 
   // --- Five destination dioramas around the plaza ---
   const dioramas = [
-    { angle: -2.4, id: 'amazon', build: buildAmazon },
-    { angle: -1.35, id: 'japan', build: buildTorii },
-    { angle: -0.3, id: 'south_india', build: buildGopuram },
-    { angle: 0.75, id: 'switzerland', build: buildAlps },
-    { angle: 1.8, id: 'paris', build: buildEiffel }
+    { angle: -2.4, id: 'amazon', surpriseId: 'travel_amazon', label: 'Explore Amazon Rainforest 🦜', build: buildAmazon },
+    { angle: -1.35, id: 'japan', surpriseId: 'travel_japan', label: 'Explore Japan & Cherry Blossoms 🌸', build: buildTorii },
+    { angle: -0.3, id: 'south_india', surpriseId: 'travel_south_india', label: 'Explore South Indian Temples 🛕', build: buildGopuram },
+    { angle: 0.75, id: 'switzerland', surpriseId: 'travel_switzerland', label: 'Explore Swiss Alps & Chalets 🏔️', build: buildAlps },
+    { angle: 1.8, id: 'paris', surpriseId: 'travel_paris', label: 'Explore Paris & Eiffel Tower 🥐', build: buildEiffel }
   ];
 
   group.userData.dioramas = {};
 
-  for (const { angle, id, build } of dioramas) {
+  // Glowing flight paths connecting central globe to each dream destination
+  const flightArcs = [];
+  const arcMat = new THREE.LineBasicMaterial({
+    color: 0xf6c878,
+    transparent: true,
+    opacity: 0.65,
+    blending: THREE.AdditiveBlending
+  });
+
+  for (const { angle, id, surpriseId, label, build } of dioramas) {
     const dx = Math.sin(angle) * 7.6;
     const dz = Math.cos(angle) * 7.6;
 
@@ -115,8 +124,48 @@ export function buildTravelGlobe(ctx) {
     group.add(diorama);
 
     group.userData.dioramas[id] = diorama;
-    ctx.addCircle(x + dx, z + dz, 1.7);
+    ctx.addCircle(x + dx, z + dz, 1.5);
+
+    // Elegant glowing golden flight arc from globe to diorama
+    const pStart = new THREE.Vector3(0, 3.4, 0);
+    const pMid = new THREE.Vector3(dx * 0.5, 4.2, dz * 0.5);
+    const pEnd = new THREE.Vector3(dx, 1.5, dz);
+    const curve = new THREE.QuadraticBezierCurve3(pStart, pMid, pEnd);
+    const arcGeo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(24));
+    const arcLine = new THREE.Line(arcGeo, arcMat);
+    group.add(arcLine);
+
+    // Glowing waypoint beacon over each diorama
+    const beacon = new THREE.Mesh(
+      new THREE.SphereGeometry(0.09, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffdf80 })
+    );
+    beacon.position.set(dx, 2.7, dz);
+    group.add(beacon);
+    flightArcs.push({ beacon, startY: 2.7 });
+
+    // Register individual interactive discovery for this destination
+    ctx.interactions.register({
+      id: surpriseId,
+      x: x + dx,
+      z: z + dz,
+      radius: 3.2,
+      label,
+      onEnter: () => {
+        window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: surpriseId } }));
+      },
+      onExit: () => {
+        ctx.messagePanel?.hide();
+      }
+    });
   }
+
+  // Animate waypoints gently hovering
+  ctx.registerAnimated((time) => {
+    flightArcs.forEach((fa, i) => {
+      fa.beacon.position.y = fa.startY + Math.sin(time * 3 + i * 1.2) * 0.1;
+    });
+  });
 
   // --- Lanterns and greenery around the plaza edge ---
   for (let i = 0; i < 6; i++) {
@@ -138,13 +187,13 @@ export function buildTravelGlobe(ctx) {
     });
   }
 
-  // Register central globe interaction
+  // Central interactive globe overview
   ctx.interactions.register({
     id: 'travel_balloon',
     x,
     z,
-    radius: 4.5,
-    label: 'Explore Dream Destinations',
+    radius: 4.2,
+    label: 'Spin the Adventure Globe & Chart Our World ✈️',
     onEnter: () => {
       window.dispatchEvent(new CustomEvent('surprise_found', { detail: { id: 'travel_balloon' } }));
     },

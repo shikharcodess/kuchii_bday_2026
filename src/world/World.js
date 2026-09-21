@@ -9,6 +9,9 @@ import {
   rockField,
   grassTuftField,
   sunflowerField,
+  roseField,
+  lavenderField,
+  cosmosField,
   createLantern
 } from './Props.js';
 import { MAT } from './Materials.js';
@@ -70,7 +73,10 @@ export class World {
       bushes: bushField(MAT.leafWarm),
       rocks: rockField(MAT.stone),
       grass: grassTuftField(MAT.grassLight),
-      sunflowers: sunflowerField()
+      sunflowers: sunflowerField(),
+      roses: roseField(),
+      lavender: lavenderField(),
+      cosmos: cosmosField()
     };
 
     this._buildStations();
@@ -97,6 +103,7 @@ export class World {
       camera: this.services.camera,
       messagePanel: this.services.messagePanel,
       surprises: this.services.surprises,
+      audio: this.services.audio,
       addCircle: (x, z, r) => this.addCircle(x, z, r),
       addHole: (hole) => this.holes.push(hole),
       addBox: (x, z, halfW, halfD, rotation = 0) => this.addBox(x, z, halfW, halfD, rotation),
@@ -200,9 +207,24 @@ export class World {
           scale: 0.35 + rand() * 0.6,
           rotY: rand() * Math.PI * 2
         });
-      } else {
+      } else if (roll < 0.72) {
         this.fields.grass.add(spot.x, spot.z, {
           scale: 0.5 + rand() * 0.7,
+          rotY: rand() * Math.PI * 2
+        });
+      } else if (roll < 0.82) {
+        this.fields.lavender.add(spot.x, spot.z, {
+          scale: 0.8 + rand() * 0.4,
+          rotY: rand() * Math.PI * 2
+        });
+      } else if (roll < 0.91) {
+        this.fields.roses.add(spot.x, spot.z, {
+          scale: 0.75 + rand() * 0.35,
+          rotY: rand() * Math.PI * 2
+        });
+      } else {
+        this.fields.cosmos.add(spot.x, spot.z, {
+          scale: 0.8 + rand() * 0.4,
           rotY: rand() * Math.PI * 2
         });
       }

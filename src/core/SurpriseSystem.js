@@ -12,12 +12,13 @@ import { CONTENT } from '../config/content.js';
  * - Guidance arrow targeting
  */
 export class SurpriseSystem {
-  constructor(scene, camera, hud, messagePanel, guidanceArrow) {
+  constructor(scene, camera, hud, messagePanel, guidanceArrow, audio = null) {
     this.scene = scene;
     this.camera = camera;
     this.hud = hud;
     this.messagePanel = messagePanel;
     this.guidanceArrow = guidanceArrow;
+    this.audio = audio;
 
     this.surprises = CONTENT.surprises || [];
     this.found = new Set();
@@ -33,6 +34,7 @@ export class SurpriseSystem {
   }
 
   _setupAudio() {
+    if (this.audio) return;
     // Elegant, soft synthesized chime chords using Web Audio API
     this.audioCtx = null;
     const initAudio = () => {
@@ -45,6 +47,10 @@ export class SurpriseSystem {
   }
 
   playChime() {
+    if (this.audio) {
+      this.audio.playChime();
+      return;
+    }
     if (!this.audioCtx) return;
     try {
       if (this.audioCtx.state === 'suspended') {
