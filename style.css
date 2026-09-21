@@ -1034,3 +1034,71 @@ html, body {
   }
 }
 
+/* ==========================================================================
+   DANCE EXIT NOTE ([Esc] Press Esc to exit the dance)
+   ========================================================================== */
+.dance-exit-note {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(20, 16, 26, 0.78);
+  border: 1px solid rgba(246, 200, 120, 0.38);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 8px 20px;
+  border-radius: 9999px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(246, 200, 120, 0.2);
+  color: #fcfbf9;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: danceNoteSlideUp 0.5s ease-out;
+}
+
+.dance-exit-note:hover {
+  background: rgba(30, 24, 38, 0.92);
+  border-color: var(--color-sun-gold);
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(246, 200, 120, 0.4);
+}
+
+.esc-pill-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--color-sun-gold);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.esc-pill-text {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: #f7f1e8;
+}
+
+@keyframes danceNoteSlideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+

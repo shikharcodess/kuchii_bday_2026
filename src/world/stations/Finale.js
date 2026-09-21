@@ -451,6 +451,21 @@ export function buildFinale(ctx) {
     }
   });
 
+  const exitNote = document.getElementById('dance-exit-hint');
+  if (exitNote) {
+    exitNote.addEventListener('click', () => {
+      if (isDancing && activeCharacter) {
+        ctx.interactions.deactivate(activeCharacter);
+      }
+    });
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Escape' && isDancing && activeCharacter) {
+      ctx.interactions.deactivate(activeCharacter);
+    }
+  });
+
   // --- Grand Finale Interaction ---
   ctx.interactions.register({
     id: 'finale_dance',
@@ -458,10 +473,15 @@ export function buildFinale(ctx) {
     z: z + (floorRadius - 1.2),
     radius: 4.8,
     label: "Take Shikhar's hand & dance under the stars ✨",
-    activeLabel: null, // Completely removes "[E] Dancing with Kuchii &hearts;" headline!
+    activeLabel: null, // Hide prompt from blocking view of dancing couple
     onEnter: (character) => {
       isDancing = true;
       activeCharacter = character;
+
+      // Show "[Esc] Press Esc to exit the dance" note
+      if (exitNote) {
+        exitNote.classList.remove('hidden');
+      }
 
       // Play public/audio/dance.mp3
       if (ctx.audio) {
@@ -494,6 +514,12 @@ export function buildFinale(ctx) {
     },
     onExit: (character) => {
       isDancing = false;
+
+      // Hide exit note
+      if (exitNote) {
+        exitNote.classList.add('hidden');
+      }
+
       if (activeCharacter) {
         activeCharacter.stopDancing();
         activeCharacter = null;

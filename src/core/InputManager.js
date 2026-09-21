@@ -20,6 +20,7 @@ export class InputManager {
     // Latched presses & clicks
     this.interactQueued = false;
     this.jumpQueued = false;
+    this.escapeQueued = false;
     this.clickQueued = null; // { x, y } in client pixels
 
     this._bind();
@@ -35,6 +36,7 @@ export class InputManager {
 
       if (code === 'KeyE' || code === 'Enter') this.interactQueued = true;
       if (code === 'Space') this.jumpQueued = true;
+      if (code === 'Escape') this.escapeQueued = true;
     };
 
     this._onKeyUp = (event) => this.keys.delete(event.code);
@@ -118,6 +120,16 @@ export class InputManager {
     const click = this.clickQueued;
     this.clickQueued = null;
     return click;
+  }
+
+  consumeEscape() {
+    const queued = this.escapeQueued;
+    this.escapeQueued = false;
+    return queued;
+  }
+
+  queueEscape() {
+    this.escapeQueued = true;
   }
 
   queueInteract() {

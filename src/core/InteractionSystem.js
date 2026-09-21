@@ -33,6 +33,7 @@ export class InteractionSystem {
 
   update(character) {
     const pressed = this.input.consumeInteract();
+    const escPressed = this.input.consumeEscape();
 
     if (this.active) {
       if (!this.active.activeLabel) {
@@ -40,7 +41,7 @@ export class InteractionSystem {
       } else {
         this.hud.show(this.active.activeLabel, 'E');
       }
-      if (pressed) this._deactivate(character);
+      if (pressed || escPressed) this._deactivate(character);
       return;
     }
 
@@ -80,5 +81,11 @@ export class InteractionSystem {
     this.active = null;
     zone.onExit?.(character);
     this.hud.hide();
+  }
+
+  deactivate(character) {
+    if (this.active) {
+      this._deactivate(character);
+    }
   }
 }
