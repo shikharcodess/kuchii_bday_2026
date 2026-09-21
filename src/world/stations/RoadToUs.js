@@ -143,8 +143,8 @@ export function buildRoadToUs(ctx) {
 
     const msg = roadWishMessages[i];
     const sign = createSignpost({
-      boardWidth: 2.1,
-      boardHeight: 1.05,
+      boardWidth: 2.8,
+      boardHeight: 1.4,
       height: 1.55,
       title: msg.title,
       lines: msg.lines,

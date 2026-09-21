@@ -36,6 +36,10 @@ export class Character {
     this.seat = null;
     this.sitBlend = 0;
 
+    // Driving vehicle state
+    this.vehicle = null;
+    this.isDriving = false;
+
     // Dancing state
     this.isDancing = false;
     this.danceBlend = 0;
@@ -390,6 +394,11 @@ export class Character {
   // ---------------------------------------------------------------- Movement
 
   update(dt, input, cameraYaw, world) {
+    if (this.vehicle) {
+      this._updateDriving(dt);
+      return;
+    }
+
     if (this.seat) {
       this._updateSeated(dt);
       return;
@@ -526,6 +535,36 @@ export class Character {
     this._animate(dt);
   }
 
+  enterVehicle(vehicle) {
+    this.vehicle = vehicle;
+    this.isDriving = true;
+    this.verticalVelocity = 0;
+    this.isGrounded = true;
+    this.moveAmount = 0;
+    this.speed = 0;
+    this.height = 0;
+  }
+
+  exitVehicle(exitPos) {
+    this.vehicle = null;
+    this.isDriving = false;
+    if (exitPos) {
+      this.position.copy(exitPos);
+    }
+    this.position.y = 0;
+    this.height = 0;
+    this.sitBlend = 0;
+    this.moveAmount = 0;
+    this.speed = 0;
+  }
+
+  _updateDriving(dt) {
+    this.sitBlend = damp(this.sitBlend, 1, 10, dt);
+    this.moveAmount = 0;
+    this.speed = this.vehicle ? Math.abs(this.vehicle.speed) : 0;
+    this._animate(dt);
+  }
+
   startDancing(pos, yaw) {
     this.isDancing = true;
     this.dancePos = pos;
@@ -603,13 +642,20 @@ export class Character {
     this.elbows[0].rotation.x = -0.15 - Math.max(0, cycleOff) * 0.3 * walk;
     this.elbows[1].rotation.x = -0.15 - Math.max(0, cycle) * 0.3 * walk;
 
-    // Seated pose
+    // Seated / Driving pose
     if (sit > 0.01) {
       for (let i = 0; i < 2; i++) {
         this.hips[i].rotation.x = THREE.MathUtils.lerp(this.hips[i].rotation.x, -1.5, sit);
         this.knees[i].rotation.x = THREE.MathUtils.lerp(this.knees[i].rotation.x, 1.45, sit);
-        this.shoulders[i].rotation.x = THREE.MathUtils.lerp(this.shoulders[i].rotation.x, -0.3, sit);
-        this.elbows[i].rotation.x = THREE.MathUtils.lerp(this.elbows[i].rotation.x, -0.9, sit);
+        if (this.isDriving) {
+          // Driving: hands forward holding the steering wheel
+          this.shoulders[i].rotation.x = THREE.MathUtils.lerp(this.shoulders[i].rotation.x, -0.75, sit);
+          this.shoulders[i].rotation.z = THREE.MathUtils.lerp(this.shoulders[i].rotation.z, i === 0 ? -0.15 : 0.15, sit);
+          this.elbows[i].rotation.x = THREE.MathUtils.lerp(this.elbows[i].rotation.x, -0.65, sit);
+        } else {
+          this.shoulders[i].rotation.x = THREE.MathUtils.lerp(this.shoulders[i].rotation.x, -0.3, sit);
+          this.elbows[i].rotation.x = THREE.MathUtils.lerp(this.elbows[i].rotation.x, -0.9, sit);
+        }
       }
     }
 

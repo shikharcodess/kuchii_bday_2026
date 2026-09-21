@@ -253,7 +253,7 @@ export const CONTENT = {
       category: 'The Grand Surprise',
       hint: 'At the Finale Gazebo',
       icon: '💖',
-      text: 'September 22 — the day the most wonderful person was born. Happy Birthday Kuchii! Thank you for loving me, for trusting me, and for being my home.'
+      text: 'September 22 — the day the most wonderful person was born. Happy Birthday Kuchii! Always be like this and always be happyy ❤️'
     }
   ]
 };

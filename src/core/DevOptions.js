@@ -10,7 +10,7 @@ import * as THREE from 'three';
  *   ?press=2   fire the interact key once, N seconds after load
  *   ?jump=1    fire the jump key once, N seconds after load
  */
-const params = new URLSearchParams(window.location.search);
+const params = new URLSearchParams(import.meta.env.DEV ? window.location.search : '');
 
 export const DevOptions = {
   /** @returns {THREE.Vector3|null} */

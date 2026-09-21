@@ -416,55 +416,64 @@ export function createWishBoardTexture({
   ctx.fillRect(1024 - 21 - cSize, 512 - 21 - cSize, cSize, cSize);
 
   // Header Title
-  ctx.font = 'bold 30px "Cormorant Garamond", Georgia, serif';
+  ctx.font = 'bold 44px "Cormorant Garamond", Georgia, serif';
   ctx.fillStyle = '#9c3d20';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillText(title.toUpperCase(), 512, 44);
+  ctx.fillText(title.toUpperCase(), 512, 40);
 
-  // Subtle divider line with center diamond
+  // Subtle divider line
   ctx.strokeStyle = '#d4a373';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(340, 88);
-  ctx.lineTo(684, 88);
+  ctx.moveTo(340, 100);
+  ctx.lineTo(684, 100);
   ctx.stroke();
 
-  // Quote lines with dynamic sizing to fit width comfortably
-  let fontSize = 32;
-  ctx.font = `600 ${fontSize}px "Outfit", -apple-system, sans-serif`;
+  // Body: big type, word-wrapped to the board instead of shrunk to fit one line.
+  // Readable from a few metres away; shrinks only if the wrapped block can't fit.
   const maxWidth = 900;
-  for (const line of lines) {
-    while (ctx.measureText(line).width > maxWidth && fontSize > 20) {
-      fontSize -= 1;
-      ctx.font = `600 ${fontSize}px "Outfit", -apple-system, sans-serif`;
+  const setFont = (px) => { ctx.font = `600 ${px}px "Outfit", -apple-system, sans-serif`; };
+  const wrap = (text) => {
+    const out = [];
+    let cur = '';
+    for (const word of text.split(' ')) {
+      const next = cur ? `${cur} ${word}` : word;
+      if (ctx.measureText(next).width > maxWidth && cur) { out.push(cur); cur = word; }
+      else cur = next;
     }
+    if (cur) out.push(cur);
+    return out;
+  };
+  let fontSize = 46;
+  let wrapped;
+  for (;;) {
+    setFont(fontSize);
+    wrapped = lines.flatMap(wrap);
+    if (wrapped.length * fontSize * 1.32 <= 300 || fontSize <= 30) break;
+    fontSize -= 2;
   }
 
   ctx.fillStyle = '#1e1410';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-
-  const startY = 125;
-  const lineHeight = Math.max(38, Math.round(fontSize * 1.48));
-  const totalHeight = lines.length * lineHeight;
-  const offsetY = Math.max(0, (290 - totalHeight) / 2);
-
-  lines.forEach((line, i) => {
-    ctx.fillText(line, 512, startY + offsetY + i * lineHeight);
+  const lineHeight = Math.round(fontSize * 1.32);
+  const blockTop = 120 + Math.max(0, (300 - wrapped.length * lineHeight) / 2);
+  wrapped.forEach((line, i) => {
+    ctx.fillText(line, 512, blockTop + i * lineHeight + lineHeight / 2);
   });
 
   // Signoff in bottom-right corner
   if (signoff) {
-    ctx.font = 'italic bold 26px "Cormorant Garamond", Georgia, serif';
+    ctx.font = 'italic bold 32px "Cormorant Garamond", Georgia, serif';
     ctx.fillStyle = '#b04a2c';
     ctx.textAlign = 'right';
-    ctx.fillText(signoff, 940, 460);
+    ctx.fillText(signoff, 940, 458);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
+  texture.anisotropy = 16;
   return texture;
 }
 

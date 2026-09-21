@@ -1102,3 +1102,16 @@ html, body {
 }
 
 
+
+/* Password dots: use a system font (webfont lacks the bullet glyph) and space them out */
+.input-wrapper input[type="password"] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.25em;
+  caret-color: var(--color-sun-gold);
+}
+.input-wrapper input[type="password"]::placeholder {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+}

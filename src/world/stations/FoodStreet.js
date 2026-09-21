@@ -179,8 +179,8 @@ export function buildFoodStreet(ctx) {
 
   // --- Heartfelt Wish Signboards in Food Court ---
   const chaatSign = createSignpost({
-    boardWidth: 2.1,
-    boardHeight: 1.05,
+    boardWidth: 2.8,
+    boardHeight: 1.4,
     height: 1.5,
     title: "Your Smile & Giggle 🌸",
     lines: [
@@ -195,24 +195,6 @@ export function buildFoodStreet(ctx) {
   group.add(chaatSign);
   const chaatSignWorld = ctx.localToWorld(group, 3.4, 3.2);
   ctx.addCircle(chaatSignWorld.x, chaatSignWorld.z, 0.6);
-
-  const entranceSign = createSignpost({
-    boardWidth: 2.1,
-    boardHeight: 1.05,
-    height: 1.5,
-    title: "Forever Craving You 🍯",
-    lines: [
-      "Mai samne baithke sab bolna chahta hu...",
-      "I just wanna see your face every single day,",
-      "and I crave your presence everydayyyyy ❤️"
-    ],
-    signoff: "— Shikhar ❤️"
-  });
-  entranceSign.position.set(-6.8, 0.14, -1.8);
-  entranceSign.rotation.y = 0.45;
-  group.add(entranceSign);
-  const entranceSignWorld = ctx.localToWorld(group, -6.8, -1.8);
-  ctx.addCircle(entranceSignWorld.x, entranceSignWorld.z, 0.6);
 
   // Register interactive surprise triggers for all 4 food counters
   registerFoodSurprises(ctx, group);

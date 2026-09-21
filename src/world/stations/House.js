@@ -102,8 +102,8 @@ export function buildHouse(ctx) {
 
   // --- Heartfelt Wish Signboard Beside Front Steps ---
   const houseSign = createSignpost({
-    boardWidth: 2.1,
-    boardHeight: 1.05,
+    boardWidth: 2.8,
+    boardHeight: 1.4,
     height: 1.5,
     title: "My Safe Place ❤️",
     lines: [

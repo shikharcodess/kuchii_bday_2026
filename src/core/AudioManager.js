@@ -251,4 +251,35 @@ export class AudioManager {
       }
     }
   }
+
+  playHorn() {
+    if (!this.audioCtx || this.isMuted) return;
+    try {
+      const now = this.audioCtx.currentTime;
+      const osc1 = this.audioCtx.createOscillator();
+      const osc2 = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+
+      osc1.type = 'triangle';
+      osc2.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(392, now); // G4
+      osc2.frequency.setValueAtTime(493.88, now); // B4
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.03);
+      gain.gain.setValueAtTime(0.18, now + 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.4);
+      osc2.stop(now + 0.4);
+    } catch (e) {
+      console.warn('Horn audio error:', e);
+    }
+  }
 }

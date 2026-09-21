@@ -158,8 +158,8 @@ export function buildSunflowerGarden(ctx) {
 
   // Wish signboard beside the pond bench
   const pondSign = createSignpost({
-    boardWidth: 2.1,
-    boardHeight: 1.05,
+    boardWidth: 2.8,
+    boardHeight: 1.4,
     height: 1.45,
     title: "Always Proud of You 🌻",
     lines: [

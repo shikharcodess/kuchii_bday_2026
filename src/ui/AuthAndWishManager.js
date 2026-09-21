@@ -9,6 +9,8 @@
  * 5. Smooth loading transition into the 3D world ("Enter The World I Made For You")
  */
 
+const SESSION_MS = 20 * 60 * 1000;
+
 export class AuthAndWishManager {
   constructor({ onEnterWorld }) {
     this.onEnterWorld = onEnterWorld;
@@ -67,12 +69,14 @@ export class AuthAndWishManager {
     if (!this.passwordForm || !this.passwordInput) return;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const isAuthed = sessionStorage.getItem('kuchii_auth') === 'true' || urlParams.get('skipAuth') === '1';
+    const dev = import.meta.env.DEV; // ?skipAuth / ?skipWish are dev-only bypasses
+    const isAuthed = this._sessionValid() || (dev && urlParams.get('skipAuth') === '1');
 
     if (isAuthed) {
       this.isAuthenticated = true;
       this.passwordScreen.classList.add('hidden');
-      if (urlParams.get('skipWish') === '1') {
+      this._scheduleLogout();
+      if (dev && urlParams.get('skipWish') === '1') {
         this.wishScreen.classList.add('hidden');
         if (this.onEnterWorld) this.onEnterWorld();
         if (this.uiOverlay) this.uiOverlay.classList.remove('hidden');
@@ -87,7 +91,6 @@ export class AuthAndWishManager {
       const val = this.passwordInput.value.trim().toLowerCase();
       if (val === '22x10') {
         this.passwordError.classList.add('hidden');
-        sessionStorage.setItem('kuchii_auth', 'true');
         this.unlockWishPage();
       } else {
         this.passwordError.classList.remove('hidden');
@@ -107,9 +110,24 @@ export class AuthAndWishManager {
     }
   }
 
+  /** Session lasts 20 minutes from unlock, then she's sent back to the password screen. */
+  _sessionValid() {
+    const t = Number(sessionStorage.getItem('kuchii_auth_at'));
+    return t > 0 && Date.now() - t < SESSION_MS;
+  }
+
+  _scheduleLogout() {
+    const t = Number(sessionStorage.getItem('kuchii_auth_at')) || Date.now();
+    setTimeout(() => {
+      sessionStorage.removeItem('kuchii_auth_at');
+      window.location.href = window.location.pathname;
+    }, Math.max(0, t + SESSION_MS - Date.now()));
+  }
+
   unlockWishPage() {
     this.isAuthenticated = true;
-    sessionStorage.setItem('kuchii_auth', 'true');
+    sessionStorage.setItem('kuchii_auth_at', String(Date.now()));
+    this._scheduleLogout();
     this.passwordScreen.classList.add('fade-out');
 
     setTimeout(() => {

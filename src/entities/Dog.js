@@ -24,6 +24,8 @@ export class Dog {
     this.moveAmount = 0;
     this.isDancing = false;
     this.danceCenter = null;
+    this.isRiding = false;
+    this.vehicle = null;
 
     this._target = new THREE.Vector3();
     this._delta = new THREE.Vector3();
@@ -148,6 +150,11 @@ export class Dog {
    * @param {World} world
    */
   update(dt, leader, world) {
+    if (this.isRiding) {
+      this._updateRiding(dt);
+      return;
+    }
+
     if (this.isDancing) {
       this._updateDancing(dt);
       return;
@@ -261,5 +268,42 @@ export class Dog {
     // Head bopping happily to the beat
     this.head.rotation.x = 0.22 + Math.sin(now * 8) * 0.12;
     this.head.rotation.z = Math.sin(now * 6) * 0.1;
+  }
+
+  enterVehicle(vehicle) {
+    this.vehicle = vehicle;
+    this.isRiding = true;
+    this.speed = 0;
+    this.moveAmount = 0;
+  }
+
+  exitVehicle(exitPos) {
+    this.vehicle = null;
+    this.isRiding = false;
+    if (exitPos) {
+      this.position.copy(exitPos);
+    }
+    this.position.y = 0;
+    this.speed = 0;
+    this.moveAmount = 0;
+  }
+
+  _updateRiding(dt) {
+    const now = performance.now() * 0.001;
+    // Tail wagging happily!
+    this.tail.rotation.y = Math.sin(now * 12) * 0.6;
+    this.tail.rotation.x = -0.3;
+
+    // Head bobbing gently in the breeze
+    this.head.rotation.z = Math.sin(now * 3.5) * 0.08;
+    this.head.rotation.x = 0.12 + Math.sin(now * 5.0) * 0.06;
+
+    // Paws resting in seat
+    this.legs[0].rotation.x = -0.55;
+    this.legs[1].rotation.x = -0.55;
+    this.legs[2].rotation.x = 0.45;
+    this.legs[3].rotation.x = 0.45;
+
+    this.body.position.y = 0.02 + Math.sin(now * 6) * 0.015;
   }
 }

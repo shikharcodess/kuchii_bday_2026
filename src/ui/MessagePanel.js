@@ -13,9 +13,13 @@ export class MessagePanel {
       }
     });
 
+    // Esc closes the card only; it must not also reach InputManager and end
+    // whatever the card belongs to (the dance, the car ride).
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.hide();
-    });
+      if (e.key !== 'Escape' || this.element.classList.contains('hidden')) return;
+      e.stopImmediatePropagation();
+      this.hide();
+    }, { capture: true });
   }
 
   show(text) {

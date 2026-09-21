@@ -68,18 +68,23 @@ export class CameraController {
 
     // Manual orbit takes priority; auto-alignment resumes shortly after.
     const dragDelta = input ? input.consumeDragDelta() : 0;
+    const isDriving = !!this.target.isDriving;
+    const isIndoor = !!this.target.isIndoor;
+
     if (dragDelta !== 0) {
       this.yaw -= dragDelta * 0.005;
+    } else if (isDriving && input && (input.keys.has('KeyW') || input.keys.has('KeyS') || input.keys.has('ArrowUp') || input.keys.has('ArrowDown')) && input.timeSinceDrag > 0.8) {
+      // Swing camera to trail smoothly behind the roadster
+      this.yaw = dampAngle(this.yaw, this.target.yaw + Math.PI, 4.5, dt);
     } else if (input && input.isMoving && input.timeSinceDrag > 1.2) {
       // Swing around to sit behind her direction of travel
       this.yaw = dampAngle(this.yaw, this.target.yaw + Math.PI, this.yawEase, dt);
     }
 
     const pos = this.target.position;
-    const isIndoor = !!this.target.isIndoor;
-    const targetDist = isIndoor ? (CONTENT.camera.indoorDistance || 5.0) : this.distance;
-    const targetHeight = isIndoor ? (CONTENT.camera.indoorHeight || 3.6) : this.height;
-    const targetLookHeight = isIndoor ? 1.2 : this.lookHeight;
+    const targetDist = isDriving ? 8.6 : (isIndoor ? (CONTENT.camera.indoorDistance || 5.0) : this.distance);
+    const targetHeight = isDriving ? 3.8 : (isIndoor ? (CONTENT.camera.indoorHeight || 3.6) : this.height);
+    const targetLookHeight = isDriving ? 1.1 : (isIndoor ? 1.2 : this.lookHeight);
 
     this.desired.set(
       pos.x + Math.sin(this.yaw) * targetDist,

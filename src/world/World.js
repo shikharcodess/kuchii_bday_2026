@@ -63,6 +63,7 @@ export class World {
     this.animated = [];
     /** Areas cut out of the meadow, e.g. the pond basin. */
     this.holes = [];
+    this.roadster = null;
 
     this.bounds = CONTENT.world.bounds;
 
@@ -114,7 +115,8 @@ export class World {
         this.addCircle(world.x, world.z, r);
       },
       localToWorld: (group, lx, lz) => this.localToWorld(group, lx, lz),
-      registerAnimated: (fn) => this.animated.push(fn)
+      registerAnimated: (fn) => this.animated.push(fn),
+      setRoadster: (r) => { this.roadster = r; }
     };
   }
 

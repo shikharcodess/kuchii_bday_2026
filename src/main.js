@@ -114,6 +114,9 @@ class App {
     }
 
     this.input.update(dt);
+    if (this.world.roadster) {
+      this.world.roadster.update(dt, this.input, this.world, this.audio);
+    }
     this.surprises.update(this.input, this.character);
     this.interactions.update(this.character);
     this.character.update(dt, this.input, this.camera.yaw, this.world);
