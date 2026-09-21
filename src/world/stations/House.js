@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MAT, tinted } from '../Materials.js';
-import { createBench, createLantern, createFenceRun } from '../Props.js';
+import { createBench, createLantern, createFenceRun, createSignpost } from '../Props.js';
 import { damp } from '../../utils/MathUtils.js';
 
 /**
@@ -99,6 +99,24 @@ export function buildHouse(ctx) {
   const porchGlobe = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), MAT.lampGlow);
   porchGlobe.position.copy(porchLantern.position);
   group.add(porchGlobe);
+
+  // --- Heartfelt Wish Signboard Beside Front Steps ---
+  const houseSign = createSignpost({
+    boardWidth: 2.1,
+    boardHeight: 1.05,
+    height: 1.5,
+    title: "My Safe Place ❤️",
+    lines: [
+      "You taught me so many things that I don't have count...",
+      "I'm never going to compare you or your effort for me.",
+      "I am so lucky to have you & want to spend rest of my life with you."
+    ],
+    signoff: "— Shikhar ❤️"
+  });
+  houseSign.position.set(porchW / 2 + 0.9, 0, porchZ + 0.8);
+  houseSign.rotation.y = -0.32;
+  group.add(houseSign);
+  ctx.addLocalCircle(group, porchW / 2 + 0.9, porchZ + 0.8, 0.55);
 
   // --- Walls (Lower permanent perimeter walls) ---
   const wallH = 2.9;

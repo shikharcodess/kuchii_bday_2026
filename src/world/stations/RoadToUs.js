@@ -100,16 +100,63 @@ export function buildRoadToUs(ctx) {
     });
   }
 
-  // --- Four signposts along the stretch (boards intentionally blank) ---
+  // --- Four signposts along the stretch filled with heartfelt wish messages ---
   group.userData.signposts = [];
-  const signCount = 4;
+  const roadWishMessages = [
+    {
+      title: "One Constant Line 🧿",
+      lines: [
+        "Just like every year, one line will always be constant:",
+        "\"WORLD NEEDS MORE PEOPLE LIKE YOU.\"",
+        "Wishing you lots & lots of happiness, love and good health 🧿"
+      ],
+      signoff: "— Shikhar ❤️"
+    },
+    {
+      title: "To My Safe Place ❤️",
+      lines: [
+        "Thank you for teaching me the way you wanted to be loved.",
+        "This is by far one of the best things happening in my life.",
+        "Thank you for being in my life & please be mine only ❤️"
+      ],
+      signoff: "— Yours only, Shikhar"
+    },
+    {
+      title: "Happiest With You 🫶",
+      lines: [
+        "I met the best and happiest version of me",
+        "when we are like this — together ❤️",
+        "Thank you for being my safe place."
+      ],
+      signoff: "— Shikhar ❤️"
+    },
+    {
+      title: "My Birthday Gift & Promise 🌹",
+      lines: [
+        "It doesn't matter how tough things ever get,",
+        "ya hum budhe ho jayein wrinkles aa jayein🌚...",
+        "Mai kabhi tumko chhodke kahi aur nahi jane wala. Promise."
+      ],
+      signoff: "— My forever gift to you ❤️"
+    }
+  ];
+
+  const signCount = roadWishMessages.length;
   for (let i = 0; i < signCount; i++) {
     const t = startT + ((endT - startT) * (i + 0.5)) / signCount;
     const side = i % 2 === 0 ? -1 : 1;
     const spot = paths.offsetAt(t, side * 3.6, new THREE.Vector3());
     const heading = paths.headingAt(t);
 
-    const sign = createSignpost({ boardWidth: 1.9, boardHeight: 0.95, height: 1.55 });
+    const msg = roadWishMessages[i];
+    const sign = createSignpost({
+      boardWidth: 2.1,
+      boardHeight: 1.05,
+      height: 1.55,
+      title: msg.title,
+      lines: msg.lines,
+      signoff: msg.signoff
+    });
     sign.position.set(spot.x, 0, spot.z);
     // Boards angle to face someone walking up the road
     sign.rotation.y = heading + Math.PI + side * 0.35;

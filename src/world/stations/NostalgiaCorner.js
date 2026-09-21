@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MAT, tinted } from '../Materials.js';
-import { createStringLights, createBench } from '../Props.js';
+import { createStringLights, createBench, createSignpost } from '../Props.js';
 import { seededRandom } from '../../utils/MathUtils.js';
 
 /**
@@ -34,6 +34,23 @@ export function buildNostalgiaCorner(ctx) {
   rugRing.rotation.x = -Math.PI / 2;
   rugRing.position.set(0, 0.26, 0.6);
   group.add(rugRing);
+
+  // --- Heartfelt Wish Signboard on Nostalgia Deck ---
+  const nostalgiaSign = createSignpost({
+    boardWidth: 2.1,
+    boardHeight: 1.05,
+    height: 1.45,
+    title: "Every Memory With You 🎞️",
+    lines: [
+      "Aur kitni tareef karu mai tumhari...",
+      "Bss itna zaroor jano ki jo bhi bol raha hu,",
+      "wo ekdum sachi wish hai, from the bottom of my heart ❤️"
+    ],
+    signoff: "— Shikhar ❤️"
+  });
+  nostalgiaSign.position.set(-5.2, 0.24, 3.2);
+  nostalgiaSign.rotation.y = 0.55;
+  group.add(nostalgiaSign);
 
   // --- Retro TV on a low cabinet ---
   const cabinet = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.9, 1.2), MAT.darkWood);

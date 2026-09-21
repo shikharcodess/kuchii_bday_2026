@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MAT, tinted } from '../Materials.js';
-import { createStringLights, createLantern } from '../Props.js';
+import { createStringLights, createLantern, createSignpost } from '../Props.js';
 import { seededRandom } from '../../utils/MathUtils.js';
 
 /**
@@ -176,6 +176,43 @@ export function buildFoodStreet(ctx) {
     ctx.scene.add(lantern);
     ctx.addCircle(world.x, world.z, 0.5);
   }
+
+  // --- Heartfelt Wish Signboards in Food Court ---
+  const chaatSign = createSignpost({
+    boardWidth: 2.1,
+    boardHeight: 1.05,
+    height: 1.5,
+    title: "Your Smile & Giggle 🌸",
+    lines: [
+      "I'm never going to get bored of your voice.",
+      "I love your giggle, your laugh, your gussa, everything...",
+      "You are a Khubsurat Insan by heart ❤️"
+    ],
+    signoff: "— Shikhar ❤️"
+  });
+  chaatSign.position.set(3.4, 0.14, 3.2);
+  chaatSign.rotation.y = -Math.PI * 0.75;
+  group.add(chaatSign);
+  const chaatSignWorld = ctx.localToWorld(group, 3.4, 3.2);
+  ctx.addCircle(chaatSignWorld.x, chaatSignWorld.z, 0.6);
+
+  const entranceSign = createSignpost({
+    boardWidth: 2.1,
+    boardHeight: 1.05,
+    height: 1.5,
+    title: "Forever Craving You 🍯",
+    lines: [
+      "Mai samne baithke sab bolna chahta hu...",
+      "I just wanna see your face every single day,",
+      "and I crave your presence everydayyyyy ❤️"
+    ],
+    signoff: "— Shikhar ❤️"
+  });
+  entranceSign.position.set(-6.8, 0.14, -1.8);
+  entranceSign.rotation.y = 0.45;
+  group.add(entranceSign);
+  const entranceSignWorld = ctx.localToWorld(group, -6.8, -1.8);
+  ctx.addCircle(entranceSignWorld.x, entranceSignWorld.z, 0.6);
 
   // Register interactive surprise triggers for all 4 food counters
   registerFoodSurprises(ctx, group);

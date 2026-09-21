@@ -66,10 +66,28 @@ export class AuthAndWishManager {
   _initPasswordForm() {
     if (!this.passwordForm || !this.passwordInput) return;
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAuthed = sessionStorage.getItem('kuchii_auth') === 'true' || urlParams.get('skipAuth') === '1';
+
+    if (isAuthed) {
+      this.isAuthenticated = true;
+      this.passwordScreen.classList.add('hidden');
+      if (urlParams.get('skipWish') === '1') {
+        this.wishScreen.classList.add('hidden');
+        if (this.onEnterWorld) this.onEnterWorld();
+        if (this.uiOverlay) this.uiOverlay.classList.remove('hidden');
+        return;
+      }
+      this.wishScreen.classList.remove('hidden');
+      this.startWishMusic();
+      return;
+    }
+
     const checkPassword = () => {
       const val = this.passwordInput.value.trim().toLowerCase();
       if (val === '22x10') {
         this.passwordError.classList.add('hidden');
+        sessionStorage.setItem('kuchii_auth', 'true');
         this.unlockWishPage();
       } else {
         this.passwordError.classList.remove('hidden');
@@ -91,6 +109,7 @@ export class AuthAndWishManager {
 
   unlockWishPage() {
     this.isAuthenticated = true;
+    sessionStorage.setItem('kuchii_auth', 'true');
     this.passwordScreen.classList.add('fade-out');
 
     setTimeout(() => {

@@ -375,8 +375,109 @@ export function createFenceRun(ax, az, bx, bz, { spacing = 1.5, height = 1.05 } 
   return group;
 }
 
-/** Wooden signpost with a blank board — Phase 3 fills these in with text. */
-export function createSignpost({ boardWidth = 1.6, boardHeight = 0.8, height = 1.5 } = {}) {
+/**
+ * Procedural Wish Signboard Texture Generator.
+ * Creates a high-resolution, elegant parchment signboard with gold ornamental borders.
+ */
+export function createWishBoardTexture({
+  title = "For My Kuchii ❤️",
+  lines = [],
+  signoff = "— Shikhar ❤️"
+} = {}) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+
+  // Parchment background gradient
+  const grad = ctx.createLinearGradient(0, 0, 1024, 512);
+  grad.addColorStop(0, '#fdfaf2');
+  grad.addColorStop(0.5, '#f7efe1');
+  grad.addColorStop(1, '#eee2cc');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1024, 512);
+
+  // Outer ornamental gold border
+  ctx.strokeStyle = '#c9933b';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(16, 16, 992, 480);
+
+  // Inner subtle gold border
+  ctx.strokeStyle = 'rgba(180, 130, 50, 0.45)';
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(28, 28, 968, 456);
+
+  // Corner decorative squares
+  ctx.fillStyle = '#c9933b';
+  const cSize = 14;
+  ctx.fillRect(21, 21, cSize, cSize);
+  ctx.fillRect(1024 - 21 - cSize, 21, cSize, cSize);
+  ctx.fillRect(21, 512 - 21 - cSize, cSize, cSize);
+  ctx.fillRect(1024 - 21 - cSize, 512 - 21 - cSize, cSize, cSize);
+
+  // Header Title
+  ctx.font = 'bold 30px "Cormorant Garamond", Georgia, serif';
+  ctx.fillStyle = '#9c3d20';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(title.toUpperCase(), 512, 44);
+
+  // Subtle divider line with center diamond
+  ctx.strokeStyle = '#d4a373';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(340, 88);
+  ctx.lineTo(684, 88);
+  ctx.stroke();
+
+  // Quote lines with dynamic sizing to fit width comfortably
+  let fontSize = 32;
+  ctx.font = `600 ${fontSize}px "Outfit", -apple-system, sans-serif`;
+  const maxWidth = 900;
+  for (const line of lines) {
+    while (ctx.measureText(line).width > maxWidth && fontSize > 20) {
+      fontSize -= 1;
+      ctx.font = `600 ${fontSize}px "Outfit", -apple-system, sans-serif`;
+    }
+  }
+
+  ctx.fillStyle = '#1e1410';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const startY = 125;
+  const lineHeight = Math.max(38, Math.round(fontSize * 1.48));
+  const totalHeight = lines.length * lineHeight;
+  const offsetY = Math.max(0, (290 - totalHeight) / 2);
+
+  lines.forEach((line, i) => {
+    ctx.fillText(line, 512, startY + offsetY + i * lineHeight);
+  });
+
+  // Signoff in bottom-right corner
+  if (signoff) {
+    ctx.font = 'italic bold 26px "Cormorant Garamond", Georgia, serif';
+    ctx.fillStyle = '#b04a2c';
+    ctx.textAlign = 'right';
+    ctx.fillText(signoff, 940, 460);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+/** Wooden signpost with readable front/back canvas board */
+export function createSignpost({
+  boardWidth = 1.9,
+  boardHeight = 0.95,
+  height = 1.55,
+  title,
+  lines,
+  signoff,
+  texture
+} = {}) {
   const group = new THREE.Group();
 
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, height, 8), MAT.darkWood);
@@ -384,15 +485,51 @@ export function createSignpost({ boardWidth = 1.6, boardHeight = 0.8, height = 1
   post.castShadow = true;
   group.add(post);
 
+  // Wooden backing board & frame
   const board = new THREE.Mesh(
     new THREE.BoxGeometry(boardWidth, boardHeight, 0.08),
-    MAT.plank
+    MAT.darkWood
   );
   board.position.y = height + boardHeight * 0.35;
   board.castShadow = true;
   board.receiveShadow = true;
   group.add(board);
   group.userData.board = board;
+
+  // Thin gold trim border around the board
+  const trim = new THREE.Mesh(
+    new THREE.BoxGeometry(boardWidth + 0.04, boardHeight + 0.04, 0.075),
+    MAT.gold
+  );
+  trim.position.copy(board.position);
+  group.add(trim);
+
+  // If text or texture is provided, mount high-res readable face panels
+  if (lines || texture) {
+    const tex = texture || createWishBoardTexture({ title, lines, signoff });
+    const faceMat = new THREE.MeshStandardMaterial({
+      map: tex,
+      roughness: 0.5,
+      metalness: 0.1
+    });
+
+    // Front face
+    const frontFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(boardWidth * 0.96, boardHeight * 0.92),
+      faceMat
+    );
+    frontFace.position.set(0, height + boardHeight * 0.35, 0.043);
+    group.add(frontFace);
+
+    // Back face (so readable when approaching from both directions!)
+    const backFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(boardWidth * 0.96, boardHeight * 0.92),
+      faceMat
+    );
+    backFace.position.set(0, height + boardHeight * 0.35, -0.043);
+    backFace.rotation.y = Math.PI;
+    group.add(backFace);
+  }
 
   return group;
 }

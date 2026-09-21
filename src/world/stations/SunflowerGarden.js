@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MAT, tinted } from '../Materials.js';
-import { createFenceRun, createBench } from '../Props.js';
+import { createFenceRun, createBench, createSignpost } from '../Props.js';
 import { Pond } from '../Pond.js';
 import { seededRandom } from '../../utils/MathUtils.js';
 
@@ -155,6 +155,23 @@ export function buildSunflowerGarden(ctx) {
   const bench = createBench();
   bench.position.set(0, deckTop, -0.6);
   deck.add(bench);
+
+  // Wish signboard beside the pond bench
+  const pondSign = createSignpost({
+    boardWidth: 2.1,
+    boardHeight: 1.05,
+    height: 1.45,
+    title: "Always Proud of You 🌻",
+    lines: [
+      "I just want to see you win in life.",
+      "Be proud of your efforts and be successful the way you want.",
+      "I'll be so, so happy to see you shine ✨"
+    ],
+    signoff: "— Shikhar ❤️"
+  });
+  pondSign.position.set(-2.0, deckTop, -0.4);
+  pondSign.rotation.y = 0.28;
+  deck.add(pondSign);
 
   // Where she actually sits. The pelvis drops half a unit in the seated pose,
   // so the root sits that much below the bench surface.

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MAT, tinted } from '../Materials.js';
-import { createLantern } from '../Props.js';
+import { createLantern, createSignpost } from '../Props.js';
 import { seededRandom } from '../../utils/MathUtils.js';
 
 /**
@@ -186,6 +186,42 @@ export function buildTravelGlobe(ctx) {
       rotY: rand() * Math.PI
     });
   }
+
+  // --- Heartfelt Wish Signboard at Paris / Eiffel Tower ---
+  const eiffelSign = createSignpost({
+    boardWidth: 2.1,
+    boardHeight: 1.05,
+    height: 1.5,
+    title: "Dream Big, Kuchii ✨",
+    lines: [
+      "I pray ki tumhari saari dreams & wishes poori hon...",
+      "Tum sab achhe se ghumo, car seekho, job mile,",
+      "parents ko proud feel karao aur bohot khush raho 🧿"
+    ],
+    signoff: "— With you in every journey ❤️"
+  });
+  eiffelSign.position.set(6.2, 0.24, -3.2);
+  eiffelSign.rotation.y = -1.1;
+  group.add(eiffelSign);
+  ctx.addCircle(x + 6.2, z - 3.2, 0.6);
+
+  // --- Wish Signboard at Plaza Ring ---
+  const wanderSign = createSignpost({
+    boardWidth: 2.1,
+    boardHeight: 1.05,
+    height: 1.5,
+    title: "Fearless & Inspiring 🌟",
+    lines: [
+      "I love how much you want to do for yourself.",
+      "I love how fearless you are, how kind & empathetic.",
+      "You are a Khubsurat Insan by heart ❤️"
+    ],
+    signoff: "— Forever admiring you 🧿"
+  });
+  wanderSign.position.set(-6.6, 0.24, 4.2);
+  wanderSign.rotation.y = 2.1;
+  group.add(wanderSign);
+  ctx.addCircle(x - 6.6, z + 4.2, 0.6);
 
   // Central interactive globe overview
   ctx.interactions.register({
