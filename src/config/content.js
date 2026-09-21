@@ -92,12 +92,12 @@ export const CONTENT = {
       message: 'From the Amazon rainforest and Tokyo to the Swiss Alps and Paris — all the adventures waiting for us.'
     },
     {
-      id: 'nostalgia_corner',
-      title: 'Nostalgia Corner',
+      id: 'driving_overlook',
+      title: 'Drive & Dream Scenic Overlook',
       position: { x: -12, z: -68 },
-      radius: 8,
-      prompt: 'Tune into nostalgic memories',
-      message: 'Spy x Family, Shin-chan & Doraemon laughs, movie marathons, and melodies that make you smile.'
+      radius: 8.5,
+      prompt: 'Hop into the driver seat & dream big',
+      message: 'A stylish vintage convertible waiting for Kuchii. Learning to drive, conquering every road, and celebrating your independence!'
     },
     {
       id: 'food_street',
@@ -208,12 +208,12 @@ export const CONTENT = {
       text: 'Every destination, every city, every sunrise on this globe — all of them are waiting for us. One ticket, one flight, forever together.'
     },
     {
-      id: 'nostalgia_record',
-      title: 'When I Fly Towards You',
-      category: 'Sweet Melody',
-      hint: 'Music player in Nostalgia Corner',
-      icon: '🎵',
-      text: 'Your favorite comfort songs and anime laughs. Whenever this melody plays, it feels like flying towards you.'
+      id: 'driving_roadster',
+      title: 'Conquer The Roads, Kuchii!',
+      category: 'Dream Goal',
+      hint: 'The vintage convertible roadster at the Scenic Overlook',
+      icon: '🚗',
+      text: 'Beep beep! Car achhe se seekho, proud feel karo... Har road tumhari hai, and I will always be your co-driver cheering for you every mile of the way ❤️'
     },
     {
       id: 'food_burger',

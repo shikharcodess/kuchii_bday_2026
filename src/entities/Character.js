@@ -606,8 +606,8 @@ export class Character {
     // Seated pose
     if (sit > 0.01) {
       for (let i = 0; i < 2; i++) {
-        this.hips[i].rotation.x = THREE.MathUtils.lerp(this.hips[i].rotation.x, -1.4, sit);
-        this.knees[i].rotation.x = THREE.MathUtils.lerp(this.knees[i].rotation.x, -1.35, sit);
+        this.hips[i].rotation.x = THREE.MathUtils.lerp(this.hips[i].rotation.x, -1.5, sit);
+        this.knees[i].rotation.x = THREE.MathUtils.lerp(this.knees[i].rotation.x, 1.45, sit);
         this.shoulders[i].rotation.x = THREE.MathUtils.lerp(this.shoulders[i].rotation.x, -0.3, sit);
         this.elbows[i].rotation.x = THREE.MathUtils.lerp(this.elbows[i].rotation.x, -0.9, sit);
       }

@@ -20,7 +20,7 @@ import { seededRandom } from '../utils/MathUtils.js';
 import { buildHouse } from './stations/House.js';
 import { buildSunflowerGarden } from './stations/SunflowerGarden.js';
 import { buildTravelGlobe } from './stations/TravelGlobe.js';
-import { buildNostalgiaCorner } from './stations/NostalgiaCorner.js';
+import { buildDrivingOverlook } from './stations/DrivingOverlook.js';
 import { buildFoodStreet } from './stations/FoodStreet.js';
 import { buildRoadToUs } from './stations/RoadToUs.js';
 import { buildFinale } from './stations/Finale.js';
@@ -29,7 +29,8 @@ const STATION_BUILDERS = {
   house: buildHouse,
   sunflower_garden: buildSunflowerGarden,
   dream_travel: buildTravelGlobe,
-  nostalgia_corner: buildNostalgiaCorner,
+  driving_overlook: buildDrivingOverlook,
+  nostalgia_corner: buildDrivingOverlook,
   food_street: buildFoodStreet,
   road_to_us: buildRoadToUs,
   finale: buildFinale

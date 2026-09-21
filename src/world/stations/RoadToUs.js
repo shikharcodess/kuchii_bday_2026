@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MAT, tinted } from '../Materials.js';
-import { createSignpost, createLantern, createBench } from '../Props.js';
+import { createSignpost, createLantern } from '../Props.js';
 import { seededRandom } from '../../utils/MathUtils.js';
 
 /**
@@ -100,7 +100,7 @@ export function buildRoadToUs(ctx) {
     });
   }
 
-  // --- Four signposts along the stretch filled with heartfelt wish messages ---
+  // --- Three signposts along the path before the stream, spaced so they do not crowd the clearing ---
   group.userData.signposts = [];
   const roadWishMessages = [
     {
@@ -122,15 +122,6 @@ export function buildRoadToUs(ctx) {
       signoff: "— Yours only, Shikhar"
     },
     {
-      title: "Happiest With You 🫶",
-      lines: [
-        "I met the best and happiest version of me",
-        "when we are like this — together ❤️",
-        "Thank you for being my safe place."
-      ],
-      signoff: "— Shikhar ❤️"
-    },
-    {
       title: "My Birthday Gift & Promise 🌹",
       lines: [
         "It doesn't matter how tough things ever get,",
@@ -141,11 +132,13 @@ export function buildRoadToUs(ctx) {
     }
   ];
 
+  // Stop signposts well before the stream bridge (0.62) so the bridge and finale view stay open and uncluttered
+  const signEndT = startT + (endT - startT) * 0.62;
   const signCount = roadWishMessages.length;
   for (let i = 0; i < signCount; i++) {
-    const t = startT + ((endT - startT) * (i + 0.5)) / signCount;
+    const t = startT + ((signEndT - startT) * (i + 0.4)) / signCount;
     const side = i % 2 === 0 ? -1 : 1;
-    const spot = paths.offsetAt(t, side * 3.6, new THREE.Vector3());
+    const spot = paths.offsetAt(t, side * 3.8, new THREE.Vector3());
     const heading = paths.headingAt(t);
 
     const msg = roadWishMessages[i];
@@ -205,15 +198,6 @@ export function buildRoadToUs(ctx) {
     const spot = paths.offsetAt(t, side * (3.4 + rand() * 6), new THREE.Vector3());
     ctx.fields.grass.add(spot.x, spot.z, { scale: 0.7 + rand() * 0.6, rotY: rand() * Math.PI });
   }
-
-  // A bench to stop and sit on partway along
-  const restT = startT + (endT - startT) * 0.68;
-  const restSpot = paths.offsetAt(restT, -3.9, new THREE.Vector3());
-  const bench = createBench();
-  bench.position.set(restSpot.x, 0, restSpot.z);
-  bench.rotation.y = paths.headingAt(restT) - Math.PI / 2;
-  group.add(bench);
-  ctx.addCircle(restSpot.x, restSpot.z, 1.2);
 
   // Register gentle milestone interaction
   ctx.interactions.register({

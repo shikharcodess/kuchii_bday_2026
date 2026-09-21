@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MAT, tinted } from '../Materials.js';
-import { createLantern, createStringLights, createBench, createSignpost } from '../Props.js';
+import { createLantern, createStringLights, createBench } from '../Props.js';
 import { seededRandom } from '../../utils/MathUtils.js';
 
 
@@ -94,43 +94,6 @@ export function buildFinale(ctx) {
     arch.add(bloom);
   }
   group.add(arch);
-
-  // --- Flower Arch Entrance Wish Signboards ---
-  // Left side of the flower arch entrance
-  const finaleSignLeft = createSignpost({
-    boardWidth: 2.2,
-    boardHeight: 1.1,
-    height: 1.55,
-    title: "Under The Stars With You ✨",
-    lines: [
-      "That day you asked me ki mai tumhare saath kyu aau...",
-      "Isliye aao because I want to give you love ❤️",
-      "Happy Birthday Shivani, and always be happy Kuchii 🧿"
-    ],
-    signoff: "— Forever yours, Shikhar"
-  });
-  finaleSignLeft.position.set(-4.6, 0, floorRadius + 1.2);
-  finaleSignLeft.rotation.y = 0.35;
-  group.add(finaleSignLeft);
-  ctx.addCircle(x - 4.6, z + floorRadius + 1.2, 0.7);
-
-  // Right side of the flower arch entrance
-  const finaleSignRight = createSignpost({
-    boardWidth: 2.2,
-    boardHeight: 1.1,
-    height: 1.55,
-    title: "My Favourite Person 🌹",
-    lines: [
-      "Happiest Birthday to my smart, intelligent & beautiful girl!",
-      "My favourite person in this entire universe,",
-      "and I love you soooooo muchhhhh ❤️"
-    ],
-    signoff: "— Shikhar ❤️"
-  });
-  finaleSignRight.position.set(4.6, 0, floorRadius + 1.2);
-  finaleSignRight.rotation.y = -0.35;
-  group.add(finaleSignRight);
-  ctx.addCircle(x + 4.6, z + floorRadius + 1.2, 0.7);
 
   // --- Lantern ring and strung bulbs above the floor ---
   const poleCount = 6;
