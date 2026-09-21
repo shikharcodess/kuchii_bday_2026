@@ -3,28 +3,6 @@ import { MAT, tinted } from '../Materials.js';
 import { createLantern, createStringLights, createBench } from '../Props.js';
 import { seededRandom } from '../../utils/MathUtils.js';
 
-function create3DHeartGeometry(size = 0.22) {
-  const shape = new THREE.Shape();
-  const x = 0, y = 0;
-  shape.moveTo(x, y + size * 0.35);
-  shape.bezierCurveTo(x, y + size * 0.75, x - size * 0.7, y + size * 0.75, x - size * 0.7, y + size * 0.35);
-  shape.bezierCurveTo(x - size * 0.7, y, x, y - size * 0.45, x, y - size * 0.65);
-  shape.bezierCurveTo(x, y - size * 0.45, x + size * 0.7, y, x + size * 0.7, y + size * 0.35);
-  shape.bezierCurveTo(x + size * 0.7, y + size * 0.75, x, y + size * 0.75, x, y + size * 0.35);
-
-  const extrudeSettings = {
-    depth: size * 0.26,
-    bevelEnabled: true,
-    bevelSegments: 4,
-    steps: 1,
-    bevelSize: size * 0.07,
-    bevelThickness: size * 0.07
-  };
-
-  const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  geo.center();
-  return geo;
-}
 
 /**
  * Station 7 — the Finale clearing.
@@ -373,27 +351,6 @@ export function buildFinale(ctx) {
   handClaspGlow.visible = false;
   group.add(handClaspGlow);
 
-  // True 3D extruded celebration hearts
-  const heartGeo = create3DHeartGeometry(0.24);
-  const heartColors = [0xf72585, 0xff4d6d, 0xff758f, 0xffb703, 0xe0aaff];
-  const heartFloaters = [];
-  for (let i = 0; i < 9; i++) {
-    const hMesh = new THREE.Mesh(
-      heartGeo,
-      tinted(MAT.rose, heartColors[i % heartColors.length], { roughness: 0.35 })
-    );
-    const ang = (i / 9) * Math.PI * 2 + rand() * 0.3;
-    const rad = 1.2 + rand() * 2.8;
-    hMesh.position.set(Math.sin(ang) * rad, 1.8 + rand() * 1.8, Math.cos(ang) * rad);
-    group.add(hMesh);
-    heartFloaters.push({
-      mesh: hMesh,
-      baseY: hMesh.position.y,
-      speed: 1.0 + rand() * 0.8,
-      phase: rand() * Math.PI * 2
-    });
-  }
-
   // Floating falling rose petals around the dance floor
   const fallingPetals = [];
   const petalMat = tinted(MAT.rose, 0xff758f, { side: THREE.DoubleSide });
@@ -415,15 +372,6 @@ export function buildFinale(ctx) {
 
   // Animation Loop
   ctx.registerAnimated((time, dt) => {
-    // 3D hearts bobbing and rotating
-    heartFloaters.forEach((item, i) => {
-      item.mesh.rotation.y = time * 0.8 + item.phase;
-      item.mesh.rotation.z = Math.sin(time * 1.2 + item.phase) * 0.15;
-      item.mesh.position.y = item.baseY + Math.sin(time * item.speed + item.phase) * 0.35;
-      const s = isDancing ? 1.25 + Math.sin(time * 2.5 + i) * 0.15 : 0.85;
-      item.mesh.scale.setScalar(s);
-    });
-
     // Falling petals drifting down softly
     fallingPetals.forEach((p) => {
       p.mesh.position.y -= p.speed * dt;
