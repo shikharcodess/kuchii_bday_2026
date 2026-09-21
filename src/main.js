@@ -14,6 +14,7 @@ import { HUD } from './ui/HUD.js';
 import { MessagePanel } from './ui/MessagePanel.js';
 
 import { AudioManager } from './core/AudioManager.js';
+import { AuthAndWishManager } from './ui/AuthAndWishManager.js';
 
 class App {
   constructor() {
@@ -81,9 +82,20 @@ class App {
       this.character.position.z + 1.4
     );
 
+    // World entry gate
+    this.isWorldActive = false;
+    this.authManager = new AuthAndWishManager({
+      onEnterWorld: () => this.startWorld()
+    });
+
     this.clock = new THREE.Clock();
     this.animate = this.animate.bind(this);
     requestAnimationFrame(this.animate);
+  }
+
+  startWorld() {
+    this.isWorldActive = true;
+    this.audio.startWorldAudio();
   }
 
   animate() {
@@ -92,6 +104,14 @@ class App {
     // Clamp dt so a backgrounded tab doesn't teleport her on return.
     const dt = Math.min(this.clock.getDelta(), 0.05);
     const elapsed = this.clock.elapsedTime;
+
+    if (!this.isWorldActive) {
+      // Warm up and render lighting/atmosphere in the background
+      this.lighting.update(this.character.position);
+      this.world.update(elapsed, dt);
+      this.sceneManager.render(dt);
+      return;
+    }
 
     this.input.update(dt);
     this.surprises.update(this.input, this.character);

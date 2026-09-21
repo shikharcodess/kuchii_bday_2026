@@ -22,12 +22,24 @@ export class AudioManager {
     this.synthInterval = null;
     this.ambientGain = null;
 
+    this.worldAudioActive = false;
     this._initAudioContext();
     this._loadAudioTracks();
   }
 
+  startWorldAudio() {
+    this.worldAudioActive = true;
+    if (!this.audioUnlocked) {
+      this._unlock();
+    } else {
+      if (this.tracks.bgm && !this.isMuted) {
+        this.tracks.bgm.play().catch(() => {});
+      }
+    }
+  }
+
   _initAudioContext() {
-    const unlock = () => {
+    this._unlock = () => {
       if (!this.audioCtx) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (AudioContextClass) {
@@ -43,14 +55,14 @@ export class AudioManager {
       }
       this.audioUnlocked = true;
 
-      // Start BGM if available
-      if (this.tracks.bgm && !this.isMuted) {
+      // Start BGM only if world has been entered and not muted
+      if (this.worldAudioActive && this.tracks.bgm && !this.isMuted) {
         this.tracks.bgm.play().catch(() => {});
       }
     };
 
-    window.addEventListener('pointerdown', unlock, { once: true });
-    window.addEventListener('keydown', unlock, { once: true });
+    window.addEventListener('pointerdown', this._unlock, { once: true });
+    window.addEventListener('keydown', this._unlock, { once: true });
   }
 
   _loadAudioTracks() {
@@ -93,7 +105,7 @@ export class AudioManager {
     const notes = [155.56, 196.00, 233.08, 261.63, 311.13, 392.00];
 
     const playHarmonic = () => {
-      if (this.isMuted || !this.audioUnlocked || this.tracks.bgm) return;
+      if (!this.worldAudioActive || this.isMuted || !this.audioUnlocked || this.tracks.bgm) return;
       if (!this.audioCtx || this.audioCtx.state !== 'running') return;
 
       const osc = this.audioCtx.createOscillator();
