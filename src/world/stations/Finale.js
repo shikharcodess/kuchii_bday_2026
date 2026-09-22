@@ -186,18 +186,81 @@ export function buildFinale(ctx) {
     });
   }
 
-  // --- Pedestal table beside dance floor for holding bouquet during dance ---
+  // --- Pedestal table beside dance floor with celebratory Birthday Cake ---
   const tableGroup = new THREE.Group();
   tableGroup.position.set(3.2, 0.28, 2.5);
   group.add(tableGroup);
 
-  const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.78, 12), MAT.darkWood);
-  tableLeg.position.y = 0.39;
+  // Wide stable pedestal base
+  const tableBase = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.04, 24), MAT.darkWood);
+  tableBase.position.y = 0.02;
+  tableBase.receiveShadow = true;
+  tableGroup.add(tableBase);
+
+  const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 0.76, 16), MAT.darkWood);
+  tableLeg.position.y = 0.40;
+  tableLeg.castShadow = true;
   tableGroup.add(tableLeg);
 
-  const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.06, 24), MAT.plank);
-  tableTop.position.y = 0.8;
+  // Tabletop (diameter ~1.0m for cake + dessert plates + bouquet)
+  const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.05, 32), MAT.plank);
+  tableTop.position.y = 0.80;
+  tableTop.receiveShadow = true;
+  tableTop.castShadow = true;
   tableGroup.add(tableTop);
+
+  // Polished gold rim around table edge
+  const tableTrim = new THREE.Mesh(new THREE.TorusGeometry(0.478, 0.007, 8, 32), MAT.gold);
+  tableTrim.rotation.x = Math.PI / 2;
+  tableTrim.position.y = 0.825;
+  tableGroup.add(tableTrim);
+
+  ctx.addCircle(x + 3.2, z + 2.5, 0.5);
+
+  // --- Celebratory Birthday Cake ---
+  const cakeData = buildCelebrationCake();
+  cakeData.group.position.set(0, 0.825, 0);
+  tableGroup.add(cakeData.group);
+
+  // --- Tabletop Accents: Dessert Plates & Golden Cake Server ---
+  const plateGeo = new THREE.CylinderGeometry(0.08, 0.065, 0.012, 20);
+  const plateMat = tinted(MAT.white, 0xfffcf7, { roughness: 0.3 });
+  const plate1 = new THREE.Mesh(plateGeo, plateMat);
+  plate1.position.set(-0.25, 0.831, 0.14);
+  plate1.castShadow = true;
+  plate1.receiveShadow = true;
+  tableGroup.add(plate1);
+
+  const plate2 = new THREE.Mesh(plateGeo, plateMat);
+  plate2.position.set(-0.23, 0.831, -0.16);
+  plate2.castShadow = true;
+  plate2.receiveShadow = true;
+  tableGroup.add(plate2);
+
+  // Golden cake knife / server
+  const knifeBlade = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.003, 0.12), MAT.gold);
+  knifeBlade.position.set(-0.35, 0.832, 0.13);
+  knifeBlade.rotation.y = 0.2;
+  tableGroup.add(knifeBlade);
+
+  // Rose petals scattered gracefully on the tabletop
+  const tablePetalMat = tinted(MAT.rose, 0xff758f, { side: THREE.DoubleSide });
+  for (let i = 0; i < 6; i++) {
+    const tp = new THREE.Mesh(new THREE.CircleGeometry(0.022, 5), tablePetalMat);
+    tp.rotation.x = -Math.PI / 2;
+    const pAng = i * 1.05 + 0.3;
+    const pRad = 0.32 + (i % 2) * 0.08;
+    tp.position.set(Math.sin(pAng) * pRad, 0.827, Math.cos(pAng) * pRad);
+    tableGroup.add(tp);
+  }
+
+  // Bouquet resting on the table when couple begins their dance
+  const tableBouquet = createRoseBouquet();
+  tableBouquet.rotation.set(Math.PI / 2, 0.2, 0.4);
+  tableBouquet.position.set(0.24, 0.86, 0.12);
+  tableBouquet.scale.set(0.85, 0.85, 0.85);
+  tableBouquet.visible = false;
+  tableGroup.add(tableBouquet);
 
   // --- Interactive Partner Character (Shikhar) ---
   const partnerGroup = new THREE.Group();
@@ -321,27 +384,9 @@ export function buildFinale(ctx) {
   pHandR.castShadow = true;
   pElbowR.add(pHandR);
 
-  // Bouquet of fresh roses
-  const bouquet = new THREE.Group();
+  // Bouquet of fresh roses held by Shikhar
+  const bouquet = createRoseBouquet();
   partnerGroup.add(bouquet);
-
-  const wrap = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.35, 8), MAT.fabricPink);
-  wrap.rotation.x = Math.PI;
-  bouquet.add(wrap);
-
-  const roseColors = [0xe63946, 0xff758f, 0xffb703, 0xf72585];
-  for (let i = 0; i < 7; i++) {
-    const r = new THREE.Mesh(
-      new THREE.SphereGeometry(0.06, 6, 6),
-      tinted(MAT.rose, roseColors[i % roseColors.length])
-    );
-    r.position.set(
-      (Math.random() - 0.5) * 0.18,
-      0.18 + Math.random() * 0.08,
-      (Math.random() - 0.5) * 0.18
-    );
-    bouquet.add(r);
-  }
 
   // Golden glowing link at clasped hands
   const handClaspGlow = new THREE.Mesh(
@@ -413,9 +458,9 @@ export function buildFinale(ctx) {
       pShoulderR.rotation.z = 0.3;
       pElbowR.rotation.x = -0.85;
 
-      // Bouquet resting on table while dancing
-      bouquet.position.set(3.2 - ox, 0.95, 2.5 - oz);
-      bouquet.rotation.set(0, time * 0.3, 0);
+      // Bouquet rests gracefully on table next to cake while dancing
+      bouquet.visible = false;
+      tableBouquet.visible = true;
 
       // Character (Kuchii) follows synchronized slow waltz position facing Shikhar
       if (activeCharacter) {
@@ -445,9 +490,22 @@ export function buildFinale(ctx) {
       pShoulderL.rotation.z = -0.22;
       pElbowL.rotation.x = -0.7;
 
+      bouquet.visible = true;
+      tableBouquet.visible = false;
       bouquet.position.set(0, 1.24, 0.26);
       bouquet.rotation.set(-0.2, 0, 0);
       handClaspGlow.visible = false;
+    }
+
+    // Gentle flickering of birthday candle flames & warm light
+    if (cakeData) {
+      const flicker = 1 + Math.sin(time * 16) * 0.08 + Math.cos(time * 24) * 0.05;
+      cakeData.candleFlames.forEach((flame, idx) => {
+        flame.scale.set(flicker, flicker * (1 + Math.sin(time * 14 + idx) * 0.07), flicker);
+      });
+      if (cakeData.candleLight) {
+        cakeData.candleLight.intensity = 0.85 + Math.sin(time * 15) * 0.12;
+      }
     }
   });
 
@@ -541,8 +599,287 @@ export function buildFinale(ctx) {
 
       handClaspGlow.visible = false;
       ctx.messagePanel?.hide();
+      bouquet.visible = true;
+      tableBouquet.visible = false;
     }
   });
 
   return group;
+}
+
+/**
+ * Creates a fresh wrapped rose bouquet with ribbon detailing.
+ */
+function createRoseBouquet() {
+  const bouquet = new THREE.Group();
+  const wrap = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.35, 12), MAT.fabricPink);
+  wrap.rotation.x = Math.PI;
+  wrap.castShadow = true;
+  bouquet.add(wrap);
+
+  const bow = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 8, 16), MAT.gold);
+  bow.rotation.x = Math.PI / 2;
+  bow.position.y = -0.03;
+  bouquet.add(bow);
+
+  const roseColors = [0xe63946, 0xff758f, 0xffb703, 0xf72585];
+  for (let i = 0; i < 7; i++) {
+    const r = new THREE.Mesh(
+      new THREE.SphereGeometry(0.055, 8, 8),
+      tinted(MAT.rose, roseColors[i % roseColors.length])
+    );
+    r.position.set(
+      Math.sin(i * 1.3) * 0.075,
+      0.16 + (i % 3) * 0.025,
+      Math.cos(i * 1.3) * 0.075
+    );
+    r.castShadow = true;
+    bouquet.add(r);
+  }
+  return bouquet;
+}
+
+/**
+ * Builds a tiered celebratory birthday cake for Kuchii, complete with
+ * a gold-accented pedestal stand, piped frosting pearls, ruby strawberry glaze,
+ * fresh strawberries, flickering candles with warm light, and a gold heart topper.
+ */
+function buildCelebrationCake() {
+  const cake = new THREE.Group();
+
+  const standMat = MAT.gold;
+  const plateMat = tinted(MAT.white, 0xfffcf7, { roughness: 0.25, metalness: 0.08 });
+  const tier1Mat = tinted(MAT.fabricPink, 0xf7b2bd, { roughness: 0.52 });
+  const tier2Mat = tinted(MAT.fabricCream, 0xfffaf2, { roughness: 0.45 });
+  const glazeMat = new THREE.MeshStandardMaterial({ color: 0xc9184a, roughness: 0.16, metalness: 0.12 });
+  const berryMat = new THREE.MeshStandardMaterial({ color: 0xba181b, roughness: 0.35, metalness: 0.05 });
+  const leafMat = tinted(MAT.leafDeep, 0x2d6a4f, { roughness: 0.8 });
+  const creamPearlMat = tinted(MAT.fabricCream, 0xfffdfa, { roughness: 0.3 });
+  const candleMat1 = tinted(MAT.rose, 0xff8fa3, { roughness: 0.5 });
+  const candleMat2 = tinted(MAT.white, 0xfff8ee, { roughness: 0.4 });
+  const flameMat = new THREE.MeshStandardMaterial({
+    color: 0xffe066,
+    emissive: 0xff9900,
+    emissiveIntensity: 2.8,
+    roughness: 0.2
+  });
+
+  // 1. Ornate Cake Stand
+  const standBase = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 0.025, 24), standMat);
+  standBase.position.y = 0.0125;
+  standBase.castShadow = true;
+  standBase.receiveShadow = true;
+  cake.add(standBase);
+
+  const standStem = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.055, 16), standMat);
+  standStem.position.y = 0.048;
+  standStem.castShadow = true;
+  cake.add(standStem);
+
+  const standPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.02, 32), plateMat);
+  standPlate.position.y = 0.082;
+  standPlate.castShadow = true;
+  standPlate.receiveShadow = true;
+  cake.add(standPlate);
+
+  const standRim = new THREE.Mesh(new THREE.TorusGeometry(0.276, 0.008, 8, 32), standMat);
+  standRim.rotation.x = Math.PI / 2;
+  standRim.position.y = 0.091;
+  cake.add(standRim);
+
+  // 2. Base Tier (Velvet Strawberry Rose Cream)
+  const tier1Height = 0.12;
+  const tier1Radius = 0.23;
+  const tier1 = new THREE.Mesh(
+    new THREE.CylinderGeometry(tier1Radius, tier1Radius, tier1Height, 32),
+    tier1Mat
+  );
+  tier1.position.y = 0.092 + tier1Height / 2;
+  tier1.castShadow = true;
+  tier1.receiveShadow = true;
+  cake.add(tier1);
+
+  // Piped frosting pearls circling base
+  const pearlCount1 = 22;
+  for (let i = 0; i < pearlCount1; i++) {
+    const angle = (i / pearlCount1) * Math.PI * 2;
+    const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), creamPearlMat);
+    pearl.position.set(
+      Math.sin(angle) * (tier1Radius + 0.003),
+      0.098,
+      Math.cos(angle) * (tier1Radius + 0.003)
+    );
+    cake.add(pearl);
+  }
+
+  // Tier 1 intermediate drip/glaze ribbon
+  const dripPlate = new THREE.Mesh(
+    new THREE.CylinderGeometry(tier1Radius + 0.003, tier1Radius + 0.003, 0.014, 32),
+    glazeMat
+  );
+  dripPlate.position.y = 0.092 + tier1Height - 0.005;
+  cake.add(dripPlate);
+
+  // 3. Top Tier (Silky French Vanilla Cream)
+  const tier2Height = 0.10;
+  const tier2Radius = 0.15;
+  const tier2 = new THREE.Mesh(
+    new THREE.CylinderGeometry(tier2Radius, tier2Radius, tier2Height, 32),
+    tier2Mat
+  );
+  tier2.position.y = 0.092 + tier1Height + tier2Height / 2;
+  tier2.castShadow = true;
+  tier2.receiveShadow = true;
+  cake.add(tier2);
+
+  // Pearl border at base of Tier 2
+  const pearlCount2 = 16;
+  for (let i = 0; i < pearlCount2; i++) {
+    const angle = (i / pearlCount2) * Math.PI * 2;
+    const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 8), creamPearlMat);
+    pearl.position.set(
+      Math.sin(angle) * (tier2Radius + 0.003),
+      0.092 + tier1Height + 0.005,
+      Math.cos(angle) * (tier2Radius + 0.003)
+    );
+    cake.add(pearl);
+  }
+
+  // Top glaze crown
+  const topGlaze = new THREE.Mesh(
+    new THREE.CylinderGeometry(tier2Radius + 0.002, tier2Radius + 0.002, 0.016, 32),
+    glazeMat
+  );
+  topGlaze.position.y = 0.092 + tier1Height + tier2Height;
+  cake.add(topGlaze);
+
+  // Glaze drips along top tier sides
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 + 0.18;
+    const dripLen = 0.02 + (i % 3) * 0.014;
+    const drip = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.006, 0.003, dripLen, 8),
+      glazeMat
+    );
+    drip.position.set(
+      Math.sin(angle) * (tier2Radius + 0.004),
+      0.092 + tier1Height + tier2Height - dripLen / 2,
+      Math.cos(angle) * (tier2Radius + 0.004)
+    );
+    cake.add(drip);
+  }
+
+  // 4. Fresh Strawberries
+  const strawberryPositions = [
+    // Top tier crown
+    { rad: 0.095, angle: 0, y: 0.092 + tier1Height + tier2Height + 0.016 },
+    { rad: 0.095, angle: (Math.PI * 2) / 5, y: 0.092 + tier1Height + tier2Height + 0.016 },
+    { rad: 0.095, angle: (Math.PI * 2 * 2) / 5, y: 0.092 + tier1Height + tier2Height + 0.016 },
+    { rad: 0.095, angle: (Math.PI * 2 * 3) / 5, y: 0.092 + tier1Height + tier2Height + 0.016 },
+    { rad: 0.095, angle: (Math.PI * 2 * 4) / 5, y: 0.092 + tier1Height + tier2Height + 0.016 },
+    // Base tier shoulder strawberries
+    { rad: 0.19, angle: 0.8, y: 0.092 + tier1Height + 0.012 },
+    { rad: 0.19, angle: 2.8, y: 0.092 + tier1Height + 0.012 },
+    { rad: 0.19, angle: 4.8, y: 0.092 + tier1Height + 0.012 }
+  ];
+
+  strawberryPositions.forEach((pos) => {
+    const sGroup = new THREE.Group();
+    sGroup.position.set(
+      Math.sin(pos.angle) * pos.rad,
+      pos.y,
+      Math.cos(pos.angle) * pos.rad
+    );
+
+    const berry = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.038, 8), berryMat);
+    berry.rotation.x = Math.PI;
+    berry.position.y = 0.012;
+    sGroup.add(berry);
+
+    const leaf = new THREE.Mesh(new THREE.CircleGeometry(0.014, 5), leafMat);
+    leaf.rotation.x = -Math.PI / 2;
+    leaf.position.y = 0.024;
+    sGroup.add(leaf);
+
+    cake.add(sGroup);
+  });
+
+  // Edible gold sugar pearls
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 + 0.4;
+    const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.007, 6, 6), MAT.gold);
+    pearl.position.set(
+      Math.sin(angle) * 0.055,
+      0.092 + tier1Height + tier2Height + 0.01,
+      Math.cos(angle) * 0.055
+    );
+    cake.add(pearl);
+  }
+
+  // 5. Birthday Candles & Flames
+  const candleFlames = [];
+  const candleBaseY = 0.092 + tier1Height + tier2Height + 0.008;
+  const candleData = [
+    { x: 0, z: 0, h: 0.09, mat: standMat },
+    { x: -0.045, z: 0.025, h: 0.075, mat: candleMat1 },
+    { x: 0.045, z: -0.025, h: 0.075, mat: candleMat2 }
+  ];
+
+  candleData.forEach((cd) => {
+    const cGroup = new THREE.Group();
+    cGroup.position.set(cd.x, candleBaseY, cd.z);
+
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, cd.h, 10), cd.mat);
+    stick.position.y = cd.h / 2;
+    stick.castShadow = true;
+    cGroup.add(stick);
+
+    const wick = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0015, 0.012, 6), MAT.darkWood);
+    wick.position.y = cd.h + 0.006;
+    cGroup.add(wick);
+
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.011, 0.028, 8), flameMat);
+    flame.position.y = cd.h + 0.02;
+    cGroup.add(flame);
+    candleFlames.push(flame);
+
+    cake.add(cGroup);
+  });
+
+  // Candle warm candlelight
+  const candleLight = new THREE.PointLight(0xffaa55, 0.85, 2.2);
+  candleLight.position.set(0, candleBaseY + 0.12, 0);
+  cake.add(candleLight);
+
+  // 6. Golden Heart Cake Topper
+  const topperGroup = new THREE.Group();
+  topperGroup.position.set(0, candleBaseY, -0.05);
+
+  const topperStick = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.11, 8), MAT.gold);
+  topperStick.position.y = 0.055;
+  topperGroup.add(topperStick);
+
+  const heartShape = new THREE.Shape();
+  heartShape.moveTo(0, 0);
+  heartShape.bezierCurveTo(0, 0.02, -0.03, 0.04, -0.03, 0.065);
+  heartShape.bezierCurveTo(-0.03, 0.085, -0.015, 0.095, 0, 0.075);
+  heartShape.bezierCurveTo(0.015, 0.095, 0.03, 0.085, 0.03, 0.065);
+  heartShape.bezierCurveTo(0.03, 0.04, 0, 0.02, 0, 0);
+
+  const extrudeSettings = {
+    depth: 0.008,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    steps: 1,
+    bevelSize: 0.003,
+    bevelThickness: 0.003
+  };
+  const heartMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(heartShape, extrudeSettings), MAT.gold);
+  heartMesh.position.set(0, 0.11, -0.004);
+  heartMesh.scale.set(0.65, 0.65, 0.65);
+  topperGroup.add(heartMesh);
+
+  cake.add(topperGroup);
+
+  return { group: cake, candleFlames, candleLight };
 }
